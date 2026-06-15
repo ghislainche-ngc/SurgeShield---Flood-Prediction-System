@@ -1,0 +1,78 @@
+name: CI
+
+# Quality gates for the SurgeShield monorepo. No deploys — this only
+# lints + typechecks the Next.js frontend and sanity-checks the ml-api.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (lint + typecheck)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # Typecheck the app (frontend/tsconfig.json) and the Convex package
+      # separately — Convex has its own tsconfig (noEmit) and the committed
+      # _generated/ client, so it typechecks standalone.
+      - name: Typecheck app
+        run: npx tsc --noEmit
+
+      - name: Typecheck Convex
+        run: npx tsc -p convex/tsconfig.json
+
+  ml-api:
+    name: ML API (lint + syntax)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      # Critical errors only (undefined names, syntax, broken f-strings) —
+      # the pipeline scripts are ported from notebooks, so we don't gate on
+      # style. This is the flake8 "fail the build" subset.
+      - name: Lint (critical errors)
+        # Notebooks are excluded: they're the narrative copies, and
+        # 1_data/01_data_acquisition.ipynb is an empty placeholder that
+        # isn't valid JSON. The production .py scripts are what we gate on.
+        run: ruff check --select=E9,F63,F7,F82 --exclude="*.ipynb" .
+
+      # Syntax-compile every script. The OSEMN stage folders start with
+      # digits so they aren't importable packages; compileall just checks
+      # each file parses without importing heavy ML deps.
+      - name: Compile check
+        run: python -m compileall -q app.py 1_data 2_data_cleaning 3_eda 4_modeling 5_interpretation
