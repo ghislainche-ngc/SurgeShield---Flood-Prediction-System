@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import "./globals.css";
 
 // Brand-matched Clerk theme — applied globally so <SignIn>/<SignUp> and the
@@ -56,7 +57,7 @@ export default function RootLayout({
         className={`${inter.variable} ${playfair.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-cream text-charcoal font-sans">
-          {children}
+          <ConvexClientProvider>{children}</ConvexClientProvider>
         </body>
       </html>
     </ClerkProvider>

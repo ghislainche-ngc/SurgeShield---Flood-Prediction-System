@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useSignUp } from "@clerk/nextjs";
 import styles from "./auth.module.css";
 import SocialButtons from "./SocialButtons";
@@ -20,7 +19,6 @@ const text = (e: MaybeError, fallback: string) =>
 
 export default function SignUpForm() {
   const { signUp } = useSignUp();
-  const router = useRouter();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -97,7 +95,9 @@ export default function SignUpForm() {
           setSubmitting(false);
           return;
         }
-        router.push(AFTER_SIGN_UP);
+        // Hard navigation (not router.push): forces the server to read the
+        // freshly-set session cookie, avoiding a bounce back to sign-in.
+        window.location.assign(AFTER_SIGN_UP);
       } else {
         setError("That code didn't complete sign-up. Please try again.");
         setSubmitting(false);

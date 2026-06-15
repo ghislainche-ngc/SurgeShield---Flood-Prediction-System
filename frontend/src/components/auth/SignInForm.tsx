@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useSignIn } from "@clerk/nextjs";
 import styles from "./auth.module.css";
 import SocialButtons from "./SocialButtons";
@@ -19,7 +18,6 @@ const text = (e: MaybeError, fallback: string) =>
 
 export default function SignInForm() {
   const { signIn } = useSignIn();
-  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +48,9 @@ export default function SignInForm() {
           setSubmitting(false);
           return;
         }
-        router.push(AFTER_SIGN_IN);
+        // Hard navigation (not router.push): forces the server to read the
+        // freshly-set session cookie, avoiding a bounce back to sign-in.
+        window.location.assign(AFTER_SIGN_IN);
       } else {
         // e.g. MFA — not part of this app's flow yet.
         setError("Additional verification is required to sign in.");
