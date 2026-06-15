@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --charcoal: #1c1c1c;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 8px 30px rgba(26, 58, 42, 0.08);
+    --shadow-card: 0 12px 40px rgba(26, 58, 42, 0.10);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; line-height: 1.15; }
+  .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* ============ NAV ============ */
+  .nav-wrap { position: sticky; top: 0; z-index: 100; background: rgba(250, 247, 242, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 18px 0; }
+  .nav > .logo { justify-self: start; }
+  .nav > .nav-right { justify-self: end; }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 20px; color: var(--forest);
+    text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 11px; display: grid; place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+  .logo-mark svg { width: 21px; height: 21px; }
+  .nav-links { display: flex; gap: 34px; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; }
+  .nav-links a:hover { color: var(--forest); }
+  .nav-links a.active { color: var(--forest); font-weight: 600; position: relative; }
+  .nav-links a.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -22px; height: 2.5px; background: var(--teal); border-radius: 2px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 11px 22px; border-radius: var(--radius-pill);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%); color: #fff; box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35); }
+  .btn-primary:hover { transform: translateY(-2px); }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    padding: 96px 0 84px;
+    color: #fff; text-align: center;
+    background:
+      linear-gradient(180deg, rgba(12, 26, 19, 0.78) 0%, rgba(18, 43, 31, 0.86) 100%),
+      url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=80') center / cover no-repeat,
+      var(--forest-deep);
+  }
+  .hero .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(20, 184, 166, 0.16); border: 1px solid rgba(20, 184, 166, 0.45);
+    color: #6ee7db; padding: 8px 18px; border-radius: var(--radius-pill);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero .eyebrow svg { width: 15px; height: 15px; }
+  .hero h1 { font-size: clamp(40px, 5.5vw, 60px); font-weight: 700; margin-bottom: 18px; letter-spacing: -0.015em; }
+  .hero p { font-size: 19px; color: rgba(255, 255, 255, 0.8); max-width: 600px; margin: 0 auto; }
+
+  /* ============ MAIN GRID ============ */
+  .section { padding: 80px 0; }
+  .contact-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; align-items: start; }
+
+  /* form card */
+  .form-card {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
+    padding: 40px 40px 36px;
+  }
+  .form-card h2 { font-size: 27px; font-weight: 700; color: var(--forest); margin-bottom: 6px; }
+  .form-card .fc-sub { font-size: 15px; color: var(--muted); margin-bottom: 30px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+  .field label .req { color: var(--teal); }
+  .field input, .field textarea, .field .sel {
+    width: 100%; font-family: 'Inter', sans-serif; font-size: 14.5px; color: var(--ink);
+    background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(26, 58, 42, 0.04); outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field input, .field .sel { height: 50px; padding: 0 16px; }
+  .field .sel { display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--muted); }
+  .field .sel svg { width: 16px; height: 16px; color: #9aa69e; }
+  .field textarea { padding: 14px 16px; resize: vertical; min-height: 130px; line-height: 1.6; }
+  .field input::placeholder, .field textarea::placeholder { color: #b3bcb5; }
+  .field input:focus, .field textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.14); }
+  .btn-send {
+    width: 100%; height: 54px; border: none; border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff; font-family: 'Inter', sans-serif; font-size: 15.5px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 8px 22px rgba(13, 148, 136, 0.35);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-send:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(13, 148, 136, 0.45); }
+  .btn-send svg { width: 18px; height: 18px; }
+  .form-note { text-align: center; font-size: 12.5px; color: #9aa69e; margin-top: 14px; }
+
+  /* info side */
+  .info-stack { display: flex; flex-direction: column; gap: 18px; }
+  .info-card {
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); padding: 24px 26px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .info-ic {
+    width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, rgba(13,148,136,0.12), rgba(26,58,42,0.06));
+    color: var(--teal);
+  }
+  .info-ic svg { width: 22px; height: 22px; stroke-width: 1.8; }
+  .info-card h3 { font-size: 17px; color: var(--forest); margin-bottom: 4px; }
+  .info-card p { font-size: 14px; color: var(--muted); }
+  .info-card p a { color: var(--teal); text-decoration: none; font-weight: 500; }
+  .info-card p a:hover { text-decoration: underline; }
+
+  /* response + socials card */
+  .info-feature {
+    background: linear-gradient(150deg, var(--forest) 0%, #0f4a3e 100%);
+    color: #fff; border: none;
+    flex-direction: column; align-items: stretch;
+    padding: 28px 26px;
+  }
+  .info-feature h3 { color: #fff; font-size: 19px; margin-bottom: 8px; }
+  .info-feature p { color: rgba(255,255,255,0.72); font-size: 14px; margin-bottom: 20px; }
+  .response-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(20,184,166,0.2); border: 1px solid rgba(20,184,166,0.4);
+    color: #6ee7db; padding: 7px 14px; border-radius: var(--radius-pill);
+    font-size: 12.5px; font-weight: 600; width: fit-content; margin-bottom: 22px;
+  }
+  .response-badge .pd { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 4px rgba(52,211,153,0.25); }
+  .socials { display: flex; gap: 12px; }
+  .social-btn {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);
+    display: grid; place-items: center; color: #fff; cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease;
+  }
+  .social-btn:hover { background: rgba(255,255,255,0.16); transform: translateY(-2px); }
+  .social-btn svg { width: 19px; height: 19px; }
+
+  /* ============ FAQ ============ */
+  .faq { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .section-head-center { text-align: center; max-width: 620px; margin: 0 auto 50px; }
+  .section-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--teal); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px;
+  }
+  .section-eyebrow::before, .section-eyebrow::after { content: ''; width: 24px; height: 1.5px; background: var(--teal); opacity: 0.5; }
+  .section-head-center h2 { font-size: clamp(30px, 3.6vw, 42px); font-weight: 700; color: var(--forest); }
+  .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .faq-item {
+    background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius-md);
+    padding: 24px 26px;
+  }
+  .faq-item h3 { display: flex; gap: 11px; align-items: flex-start; font-size: 16.5px; color: var(--forest); margin-bottom: 8px; }
+  .faq-item h3 .q { color: var(--teal); font-weight: 700; flex-shrink: 0; }
+  .faq-item p { font-size: 14px; color: var(--muted); }
+
+  /* footer */
+  footer { background: var(--charcoal); color: rgba(255, 255, 255, 0.6); padding: 56px 0 36px; }
+  .footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .footer-brand .logo { color: #fff; }
+  .footer-brand p { margin-top: 14px; font-size: 14px; max-width: 280px; }
+  .footer-cols { display: flex; gap: 64px; }
+  .footer-col h4 { color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 10px; }
+  .footer-col a { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 14px; }
+  .footer-col a:hover { color: var(--teal-bright); }
+  .footer-bottom { display: flex; justify-content: space-between; padding-top: 28px; font-size: 13px; color: rgba(255, 255, 255, 0.4); }
+
+  @media (max-width: 980px) {
+    .contact-grid { grid-template-columns: 1fr; }
+    .faq-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .footer-top { flex-direction: column; }
+  }
+  @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<div class="nav-wrap">
+  <div class="container">
+    <nav class="nav">
+      <a href="#" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+            <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+          </svg>
+        </span>
+        SurgeShield
+      </a>
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#" class="active">Contact</a></li>
+      </ul>
+      <div class="nav-right">
+        <a href="#" class="btn btn-primary">Sign In</a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="container">
+    <span class="eyebrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+      Get In Touch
+    </span>
+    <h1>Let's talk flood resilience</h1>
+    <p>Questions about predictions, partnerships, or deploying SurgeShield for your community? We'd love to hear from you.</p>
+  </div>
+</header>
+
+<!-- ============ CONTACT ============ -->
+<section class="section">
+  <div class="container contact-grid">
+
+    <!-- FORM -->
+    <div class="form-card">
+      <h2>Send us a message</h2>
+      <p class="fc-sub">Fill out the form and our team will get back to you within one business day.</p>
+      <form>
+        <div class="field-row">
+          <div class="field">
+            <label for="fn">First name <span class="req">*</span></label>
+            <input type="text" id="fn" placeholder="Ghislain">
+          </div>
+          <div class="field">
+            <label for="ln">Last name <span class="req">*</span></label>
+            <input type="text" id="ln" placeholder="Nkeneng">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="em">Email <span class="req">*</span></label>
+            <input type="email" id="em" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label for="org">Organization</label>
+            <input type="text" id="org" placeholder="City council, NGO, university...">
+          </div>
+        </div>
+        <div class="field">
+          <label for="topic">What is this about?</label>
+          <div class="sel">
+            General inquiry
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+        <div class="field">
+          <label for="msg">Message <span class="req">*</span></label>
+          <textarea id="msg" placeholder="Tell us how we can help..."></textarea>
+        </div>
+        <button type="submit" class="btn-send">
+          Send Message
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+        <p class="form-note">By submitting, you agree to our Privacy Policy. We never share your details.</p>
+      </form>
+    </div>
+
+    <!-- INFO SIDE -->
+    <div class="info-stack">
+      <div class="info-card">
+        <span class="info-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>
+        </span>
+        <div>
+          <h3>Email Us</h3>
+          <p><a href="mailto:hello@surgeshield.app">hello@surgeshield.app</a><br>For support: <a href="mailto:support@surgeshield.app">support@surgeshield.app</a></p>
+        </div>
+      </div>
+      <div class="info-card">
+        <span class="info-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        </span>
+        <div>
+          <h3>Visit Us</h3>
+          <p>ICT University, Faculty of ICT<br>Yaoundé, Cameroon</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <span class="info-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </span>
+        <div>
+          <h3>Office Hours</h3>
+          <p>Monday – Friday, 8:00 AM – 5:00 PM (WAT)<br>The prediction API runs 24/7.</p>
+        </div>
+      </div>
+
+      <div class="info-card info-feature">
+        <span class="response-badge"><span class="pd"></span> Typically replies in &lt; 24 hours</span>
+        <h3>Built for collaboration</h3>
+        <p>Researchers, disaster-response agencies, and local governments — reach out to discuss deploying SurgeShield in your region.</p>
+        <div class="socials">
+          <a href="#" class="social-btn" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-1.94c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .3.2.67.8.55A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg></a>
+          <a href="#" class="social-btn" aria-label="X / Twitter"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-7-6.1 7H1.6l8.2-9.3L1 2h7l4.8 6.4L18.9 2zm-2.4 18h1.9L7.6 4H5.6l10.9 16z"/></svg></a>
+          <a href="#" class="social-btn" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section faq">
+  <div class="container">
+    <div class="section-head-center">
+      <span class="section-eyebrow">FAQ</span>
+      <h2>Frequently asked questions</h2>
+    </div>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h3><span class="q">Q.</span> Is SurgeShield free to use?</h3>
+        <p>Yes — citizen monitoring and the prediction engine are free. Custom deployments and agency integrations are arranged on request.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">Q.</span> How accurate are the predictions?</h3>
+        <p>Our XGBoost model reaches 93.2% accuracy on held-out test data, validated with 5-fold cross-validation.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">Q.</span> Does it work outside India?</h3>
+        <p>Yes. The model learns from universal environmental physics — rainfall, elevation, discharge — so it transfers across geographies.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">Q.</span> Can I integrate the API?</h3>
+        <p>Absolutely. The Flask REST API exposes a simple <code>/predict</code> endpoint. Contact us for documentation and access keys.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <span class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+              <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+            </svg>
+          </span>
+          SurgeShield
+        </a>
+        <p>AI-powered flood prediction making disaster intelligence accessible to every community.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul><li><a href="#">Prediction Engine</a></li><li><a href="#">Risk Map</a></li><li><a href="#">Analytics</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul><li><a href="#">About</a></li><li><a href="#">Methodology</a></li><li><a href="#">Contact</a></li></ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul><li><a href="#">Documentation</a></li><li><a href="#">API Status</a></li><li><a href="#">Open Data</a></li></ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 SurgeShield · Global Flood Intelligence</span>
+      <span>Built at ICT University, Cameroon</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

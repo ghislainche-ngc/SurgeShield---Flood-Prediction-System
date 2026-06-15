@@ -1,0 +1,21 @@
+{
+  "model": "Logistic Regression",
+  "labels": [
+    "No Flood",
+    "Flood"
+  ],
+  "matrix": [
+    [
+      409,
+      580
+    ],
+    [
+      415,
+      596
+    ]
+  ],
+  "tn": 409,
+  "fp": 580,
+  "fn": 415,
+  "tp": 596
+}

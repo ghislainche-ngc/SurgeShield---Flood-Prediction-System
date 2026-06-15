@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SurgeShield — Predict Floods Before They Strike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --charcoal: #1c1c1c;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 8px 30px rgba(26, 58, 42, 0.08);
+    --shadow-card: 0 12px 40px rgba(26, 58, 42, 0.10);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; line-height: 1.15; }
+  .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+  .icon { width: 22px; height: 22px; stroke-width: 1.8; flex-shrink: 0; }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    min-height: clamp(640px, 100vh, 940px);
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    background:
+      linear-gradient(180deg, rgba(12, 26, 19, 0.82) 0%, rgba(12, 26, 19, 0.55) 45%, rgba(18, 43, 31, 0.88) 100%),
+      url('https://images.unsplash.com/photo-1437482078695-73f5ca6c96e2?auto=format&fit=crop&w=2000&q=80') center / cover no-repeat,
+      var(--forest-deep);
+  }
+  .nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 26px 0;
+  }
+  .nav > .logo { justify-self: start; }
+  .nav > .btn { justify-self: end; }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    color: #fff;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.45);
+  }
+  .logo-mark svg { width: 21px; height: 21px; }
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+  .nav-links a {
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  .nav-links a:hover { color: #fff; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 26px;
+    border-radius: var(--radius-pill);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(13, 148, 136, 0.5); }
+  .btn-ghost-light {
+    background: transparent;
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+  }
+  .btn-ghost-light:hover { background: rgba(255, 255, 255, 0.12); }
+  .nav .btn { padding: 11px 22px; font-size: 14px; }
+
+  .hero-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 70px 0 90px;
+  }
+  .hero-body h1 { max-width: 780px; }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    background: rgba(20, 184, 166, 0.16);
+    border: 1px solid rgba(20, 184, 166, 0.45);
+    color: #6ee7db;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    backdrop-filter: blur(8px);
+  }
+  .hero-badge svg { width: 15px; height: 15px; }
+  .hero h1 {
+    font-size: clamp(44px, 6.2vw, 76px);
+    font-weight: 700;
+    margin-bottom: 24px;
+    letter-spacing: -0.015em;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--teal-bright);
+  }
+  .hero-sub {
+    font-size: 19px;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 620px;
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+  .hero-ctas { display: flex; gap: 16px; margin-bottom: 56px; }
+  .hero-proof {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .hero-proof .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+  }
+  .hero-proof strong { color: #fff; font-weight: 600; }
+
+  /* ============ STATS ============ */
+  .stats { padding: 96px 0 88px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    padding: 44px 40px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 40px; right: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), transparent);
+    border-radius: 0 0 4px 4px;
+  }
+  .stat-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--forest);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .stat-number span { color: var(--teal); }
+  .stat-label { font-size: 15px; color: var(--muted); line-height: 1.55; }
+  .stats-source {
+    text-align: center;
+    margin-top: 36px;
+    font-size: 13px;
+    color: #9aa69e;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============ SECTION HEADERS ============ */
+  .section-head { text-align: center; max-width: 640px; margin: 0 auto 64px; }
+  .section-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--teal);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .section-eyebrow::before, .section-eyebrow::after {
+    content: '';
+    width: 24px; height: 1.5px;
+    background: var(--teal);
+    opacity: 0.5;
+  }
+  .section-head h2 {
+    font-size: clamp(34px, 4vw, 46px);
+    font-weight: 700;
+    color: var(--forest);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .section-head p { font-size: 17px; color: var(--muted); }
+
+  /* ============ HOW IT WORKS ============ */
+  .how { padding: 40px 0 110px; }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .step-card {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    padding: 42px 36px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .step-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-card); }
+  .step-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+  }
+  .step-icon {
+    width: 54px; height: 54px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(26, 58, 42, 0.08));
+    display: grid;
+    place-items: center;
+    color: var(--teal);
+  }
+  .step-icon svg { width: 26px; height: 26px; }
+  .step-card h3 { font-size: 23px; color: var(--forest); margin-bottom: 12px; }
+  .step-card p { font-size: 15px; color: var(--muted); }
+
+  /* ============ FEATURES (dark) ============ */
+  .features {
+    background:
+      url("data:image/svg+xml,%3Csvg width='600' height='600' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1.4'%3E%3Cpath d='M50 300c0-140 110-250 250-250s250 110 250 250-110 250-250 250S50 440 50 300z'/%3E%3Cpath d='M110 300c0-105 85-190 190-190s190 85 190 190-85 190-190 190-190-85-190-190z'/%3E%3Cpath d='M170 300c0-72 58-130 130-130s130 58 130 130-58 130-130 130-130-58-130-130z'/%3E%3Cpath d='M230 300c0-39 31-70 70-70s70 31 70 70-31 70-70 70-70-31-70-70z'/%3E%3Cpath d='M-80 80c80-40 180-50 270 0s200 60 290 10 180-40 240 10'/%3E%3Cpath d='M-80 130c80-40 180-50 270 0s200 60 290 10 180-40 240 10'/%3E%3Cpath d='M-80 520c80-40 180-50 270 0s200 60 290 10 180-40 240 10'/%3E%3C/g%3E%3C/svg%3E"),
+      linear-gradient(150deg, #14281e 0%, var(--forest) 55%, #0e3a33 100%);
+    padding: 110px 0;
+    color: #fff;
+  }
+  .features .section-head h2 { color: #fff; }
+  .features .section-head p { color: rgba(255, 255, 255, 0.65); }
+  .features .section-eyebrow { color: var(--teal-bright); }
+  .features .section-eyebrow::before, .features .section-eyebrow::after { background: var(--teal-bright); }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+  }
+  .feature-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg);
+    padding: 40px 38px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .feature-card:hover {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(20, 184, 166, 0.5);
+  }
+  .feature-icon {
+    width: 52px; height: 52px;
+    border-radius: 15px;
+    background: rgba(20, 184, 166, 0.16);
+    border: 1px solid rgba(20, 184, 166, 0.35);
+    display: grid;
+    place-items: center;
+    color: var(--teal-bright);
+    margin-bottom: 24px;
+  }
+  .feature-icon svg { width: 25px; height: 25px; }
+  .feature-card h3 { font-size: 23px; margin-bottom: 12px; }
+  .feature-card p { font-size: 15px; color: rgba(255, 255, 255, 0.68); }
+
+  /* ============ VALUES ============ */
+  .values { padding: 110px 0; }
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .value-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 36px 30px;
+    box-shadow: var(--shadow-soft);
+  }
+  .value-icon {
+    width: 46px; height: 46px;
+    border-radius: 13px;
+    background: rgba(13, 148, 136, 0.1);
+    display: grid;
+    place-items: center;
+    color: var(--teal);
+    margin-bottom: 22px;
+  }
+  .value-icon svg { width: 22px; height: 22px; }
+  .value-card h3 { font-size: 19px; color: var(--forest); margin-bottom: 10px; }
+  .value-card p { font-size: 14px; color: var(--muted); }
+
+  /* ============ CTA ============ */
+  .cta { padding: 0 0 110px; }
+  .cta-inner {
+    background: linear-gradient(130deg, var(--forest) 0%, #0f4a3e 55%, var(--teal) 130%);
+    border-radius: 28px;
+    padding: 88px 60px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.06' stroke-width='1.3'%3E%3Cpath d='M-40 60c60-30 140-38 210 0s150 45 220 8 140-30 180 8'/%3E%3Cpath d='M-40 110c60-30 140-38 210 0s150 45 220 8 140-30 180 8'/%3E%3Cpath d='M-40 160c60-30 140-38 210 0s150 45 220 8 140-30 180 8'/%3E%3Cpath d='M-40 310c60-30 140-38 210 0s150 45 220 8 140-30 180 8'/%3E%3Cpath d='M-40 360c60-30 140-38 210 0s150 45 220 8 140-30 180 8'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .cta-inner > * { position: relative; }
+  .cta-inner h2 { font-size: clamp(32px, 4vw, 44px); margin-bottom: 16px; }
+  .cta-inner p { font-size: 17px; color: rgba(255, 255, 255, 0.75); margin-bottom: 36px; }
+  .cta-buttons { display: flex; gap: 16px; justify-content: center; }
+  .btn-white { background: #fff; color: var(--forest); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+  .btn-white:hover { transform: translateY(-2px); }
+
+  /* ============ FOOTER ============ */
+  footer {
+    background: var(--charcoal);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 64px 0 40px;
+  }
+  .footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+    padding-bottom: 44px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .footer-brand p { margin-top: 14px; font-size: 14px; max-width: 280px; }
+  .footer-cols { display: flex; gap: 72px; }
+  .footer-col h4 {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 11px; }
+  .footer-col a { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--teal-bright); }
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 32px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  /* ============ SHORT VIEWPORTS (laptops) ============ */
+  @media (max-height: 780px) {
+    .nav { padding: 18px 0; }
+    .hero-body { padding: 36px 0 56px; }
+    .hero-badge { margin-bottom: 20px; padding: 7px 15px; font-size: 12px; }
+    .hero h1 { font-size: clamp(38px, 4.6vw, 56px); margin-bottom: 18px; }
+    .hero-sub { font-size: 17px; margin-bottom: 28px; max-width: 560px; }
+    .hero-ctas { margin-bottom: 36px; }
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 980px) {
+    .stats-grid, .steps-grid { grid-template-columns: 1fr; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .values-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    .footer-top { flex-direction: column; }
+  }
+  @media (max-width: 600px) {
+    .values-grid { grid-template-columns: 1fr; }
+    .hero-ctas { flex-direction: column; align-items: flex-start; }
+    .cta-buttons { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="container">
+    <nav class="nav">
+      <a href="#" class="logo" aria-label="SurgeShield home">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+            <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+          </svg>
+        </span>
+        SurgeShield
+      </a>
+      <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#how">How It Works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a href="#" class="btn btn-primary">Get Started</a>
+    </nav>
+  </div>
+
+  <div class="container hero-body">
+    <span class="hero-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      AI-Powered Flood Intelligence
+    </span>
+    <h1>Predict Floods <em>Before</em> They Strike</h1>
+    <p class="hero-sub">SurgeShield uses machine learning to analyze environmental data — rainfall, river levels, elevation, soil type — and predicts flood risk in real-time. Protecting communities, saving lives.</p>
+    <div class="hero-ctas">
+      <a href="#" class="btn btn-primary">
+        Start Predicting
+        <svg class="icon" style="width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a href="#how" class="btn btn-ghost-light">Learn More</a>
+    </div>
+    <div class="hero-proof">
+      <span><strong>10,000+</strong> Data Points Analyzed</span>
+      <span class="dot" aria-hidden="true"></span>
+      <span><strong>93.2%</strong> Prediction Accuracy</span>
+      <span class="dot" aria-hidden="true"></span>
+      <span><strong>5</strong> ML Models Compared</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ STATS ============ -->
+<section class="stats" id="about">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">2.3 <span>Billion</span></div>
+        <p class="stat-label">People affected by floods globally between 1998 and 2017 — more than any other natural disaster.</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">$82 <span>Billion</span></div>
+        <p class="stat-label">Annual global flood damage to homes, infrastructure, and livelihoods.</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">93.2<span>%</span></div>
+        <p class="stat-label">SurgeShield's prediction accuracy, validated on 2,000 held-out flood observations.</p>
+      </div>
+    </div>
+    <p class="stats-source">Data: WHO &nbsp;·&nbsp; World Bank &nbsp;·&nbsp; SurgeShield ML Pipeline</p>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-eyebrow">The Process</span>
+      <h2>How SurgeShield Works</h2>
+      <p>Three simple steps from data to protection</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-top">
+          <span class="step-num">01</span>
+          <span class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="3" width="14" height="18" rx="2"/>
+              <path d="M9 3.5V2h6v1.5M9 9h6M9 13h6M9 17h4"/>
+            </svg>
+          </span>
+        </div>
+        <h3>Input Environmental Data</h3>
+        <p>Enter rainfall, temperature, river discharge, elevation, soil type and other parameters for your location.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-top">
+          <span class="step-num">02</span>
+          <span class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 4a3 3 0 0 0-3 3v.5A3.5 3.5 0 0 0 6 11a3.5 3.5 0 0 0 .5 6.9A3 3 0 0 0 12 20a3 3 0 0 0 5.5-2.1A3.5 3.5 0 0 0 18 11a3.5 3.5 0 0 0-3-3.5V7a3 3 0 0 0-3-3z"/>
+              <path d="M12 4v16M8.5 9.5h-2M17.5 9.5h-2M8.5 15h-2M17.5 15h-2" stroke-width="1.4"/>
+            </svg>
+          </span>
+        </div>
+        <h3>AI Analyzes &amp; Predicts</h3>
+        <p>Our XGBoost model processes your data against 10,000 training observations to classify flood risk.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-top">
+          <span class="step-num">03</span>
+          <span class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </span>
+        </div>
+        <h3>Get Actionable Results</h3>
+        <p>Receive flood probability, risk level, and the top contributing factors driving the prediction.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-eyebrow">Platform</span>
+      <h2>Designed to live across the modern disaster response world</h2>
+      <p>Every capability built for clarity, speed, and trust.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>
+          </svg>
+        </span>
+        <h3>Prediction Engine</h3>
+        <p>12-parameter input form with intelligent defaults and real-time ML prediction served by a production API.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>
+          </svg>
+        </span>
+        <h3>Interactive Risk Map</h3>
+        <p>Visualize flood-prone zones with color-coded markers across 10,000 observations on a dark-themed Leaflet map.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/>
+          </svg>
+        </span>
+        <h3>Analytics Dashboard</h3>
+        <p>Compare 5 ML models, view confusion matrices, ROC curves, and feature importance — all in one place.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.5"/><path d="M3.5 19c.7-3 2.9-4.5 5.5-4.5s4.8 1.5 5.5 4.5"/><path d="M16.5 4.5a3.5 3.5 0 0 1 0 7M18 14.7c1.6.6 2.6 1.9 3 4.3"/>
+          </svg>
+        </span>
+        <h3>Role-Based Access</h3>
+        <p>Citizen monitoring and administrator oversight, secured with Clerk authentication.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VALUES ============ -->
+<section class="values">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-eyebrow">Principles</span>
+      <h2>Grounded in clearer standards</h2>
+    </div>
+    <div class="values-grid">
+      <div class="value-card">
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+          </svg>
+        </span>
+        <h3>Open Data</h3>
+        <p>Built on publicly available environmental datasets.</p>
+      </div>
+      <div class="value-card">
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.7 1.3 1.5 1.5 2.5h5c.2-1 .7-1.8 1.5-2.5A6 6 0 0 0 12 3z"/>
+          </svg>
+        </span>
+        <h3>Transparent AI</h3>
+        <p>Every prediction explains which factors drove the result.</p>
+      </div>
+      <div class="value-card">
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>
+          </svg>
+        </span>
+        <h3>Global Transferability</h3>
+        <p>Model trained on universal physics — works across geographies.</p>
+      </div>
+      <div class="value-card">
+        <span class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><circle cx="7" cy="7" r="0.5" fill="currentColor"/><circle cx="7" cy="17" r="0.5" fill="currentColor"/>
+          </svg>
+        </span>
+        <h3>Production Deployed</h3>
+        <p>HTTPS, VPS, Nginx — not just a research prototype.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta" id="contact">
+  <div class="container">
+    <div class="cta-inner">
+      <h2>Ready to protect any community, anywhere?</h2>
+      <p>Start predicting flood risk for free with SurgeShield.</p>
+      <div class="cta-buttons">
+        <a href="#" class="btn btn-white">Get Started</a>
+        <a href="#" class="btn btn-ghost-light">View Documentation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <span class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+              <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+            </svg>
+          </span>
+          SurgeShield
+        </a>
+        <p>AI-powered flood prediction making disaster intelligence accessible to every community.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#">Prediction Engine</a></li>
+            <li><a href="#">Risk Map</a></li>
+            <li><a href="#">Analytics</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Methodology</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">API Status</a></li>
+            <li><a href="#">Open Data</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 SurgeShield · Global Flood Intelligence</span>
+      <span>Built at ICT University, Cameroon</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

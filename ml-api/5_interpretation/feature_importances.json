@@ -1,0 +1,61 @@
+{
+  "model": "Logistic Regression",
+  "type": "logistic_coefficient",
+  "importances": [
+    {
+      "feature": "Historical Floods",
+      "importance": 0.076368,
+      "signed": 0.076368
+    },
+    {
+      "feature": "Humidity",
+      "importance": 0.061088,
+      "signed": 0.061088
+    },
+    {
+      "feature": "Infrastructure",
+      "importance": 0.030338,
+      "signed": -0.030338
+    },
+    {
+      "feature": "Temperature",
+      "importance": 0.02985,
+      "signed": -0.02985
+    },
+    {
+      "feature": "Water Level",
+      "importance": 0.021982,
+      "signed": -0.021982
+    },
+    {
+      "feature": "Elevation",
+      "importance": 0.021873,
+      "signed": -0.021873
+    },
+    {
+      "feature": "Rainfall",
+      "importance": 0.01043,
+      "signed": -0.01043
+    },
+    {
+      "feature": "River Discharge",
+      "importance": 0.009626,
+      "signed": -0.009626
+    },
+    {
+      "feature": "Population Density",
+      "importance": 0.004797,
+      "signed": -0.004797
+    },
+    {
+      "feature": "Land Cover",
+      "importance": 0.000492,
+      "signed": 0.000492
+    },
+    {
+      "feature": "Soil Type",
+      "importance": 0.000492,
+      "signed": 0.000492
+    }
+  ]
+}

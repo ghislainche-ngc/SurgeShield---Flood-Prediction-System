@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --risk-low: #16a34a;
+    --risk-mod: #d97706;
+    --risk-high: #dc2626;
+    --risk-crit: #7f1d1d;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 6px 24px rgba(26, 58, 42, 0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    padding: 26px 16px 20px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 19px; color: #fff;
+    text-decoration: none; padding: 0 10px; margin-bottom: 34px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 10px; display: grid; place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4); flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .nav-section { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.66); text-decoration: none;
+    font-size: 14.5px; font-weight: 500;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .nav-item svg { width: 19px; height: 19px; stroke-width: 1.8; flex-shrink: 0; }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+  .nav-item .nav-tag {
+    margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+    background: rgba(20, 184, 166, 0.25); color: var(--teal-bright);
+    padding: 2px 7px; border-radius: 100px;
+  }
+  .nav-item.active .nav-tag { background: rgba(255,255,255,0.25); color: #fff; }
+  .nav-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(255, 255, 255, 0.38);
+    padding: 0 14px; margin-bottom: 8px;
+  }
+  .sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 18px 10px; }
+  .spacer { flex: 1; }
+  .user-card {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 10px; border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .avatar {
+    position: relative; width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid; place-items: center;
+    font-size: 13.5px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .avatar::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #22c55e; border: 2px solid var(--forest-deep);
+  }
+  .user-meta { min-width: 0; }
+  .user-meta .name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .user-meta .name .admin-chip { font-size: 8.5px; font-weight: 700; background: var(--teal); color: #fff; padding: 1px 6px; border-radius: 100px; letter-spacing: 0.05em; }
+  .user-meta .email {
+    font-size: 11.5px; color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ============ MAIN ============ */
+  .main { padding: 30px 36px 44px; min-width: 0; }
+  .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .topbar h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px; font-weight: 700; color: var(--forest); letter-spacing: -0.01em;
+  }
+  .admin-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
+    background: rgba(13, 148, 136, 0.1); color: var(--teal);
+    padding: 7px 14px; border-radius: var(--radius-pill);
+  }
+  .admin-badge svg { width: 14px; height: 14px; stroke-width: 2; }
+
+  .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+  .card-pad { padding: 22px 24px; }
+  .card h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 700; color: var(--forest); margin-bottom: 16px; }
+
+  /* stat cards row (5) */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 22px; }
+  .stat-card {
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 18px 20px; box-shadow: var(--shadow-soft);
+  }
+  .stat-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .stat-title { font-size: 12.5px; color: var(--muted); }
+  .stat-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+  .stat-ic svg { width: 17px; height: 17px; stroke-width: 1.9; }
+  .ic-teal { background: rgba(13, 148, 136, 0.12); color: var(--teal); }
+  .ic-blue { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
+  .ic-amber { background: rgba(217, 119, 6, 0.12); color: var(--risk-mod); }
+  .ic-purple { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+  .ic-green { background: rgba(22, 163, 74, 0.12); color: var(--risk-low); }
+  .stat-num { font-family: 'Playfair Display', Georgia, serif; font-size: 30px; font-weight: 700; color: var(--forest); line-height: 1.1; }
+  .stat-foot { font-size: 12px; margin-top: 4px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .stat-foot.up { color: var(--risk-low); font-weight: 600; }
+  .stat-foot svg { width: 12px; height: 12px; }
+  .mini-spark { display: flex; align-items: flex-end; gap: 2px; height: 18px; margin-top: 6px; }
+  .mini-spark span { flex: 1; background: rgba(13, 148, 136, 0.3); border-radius: 2px 2px 0 0; }
+  .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--risk-low); }
+
+  /* row 2 */
+  .row-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 22px; margin-bottom: 22px; }
+  .full { margin-bottom: 22px; }
+
+  /* user table */
+  .card-head-flex { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .mini-search {
+    display: flex; align-items: center; gap: 8px;
+    height: 36px; padding: 0 13px; border-radius: var(--radius-md);
+    background: #fbf9f4; border: 1px solid var(--line); font-size: 13px; color: var(--muted);
+  }
+  .mini-search svg { width: 14px; height: 14px; }
+  .mini-search input { border: none; background: none; outline: none; font-size: 13px; width: 140px; font-family: 'Inter', sans-serif; }
+  .utable { width: 100%; border-collapse: collapse; }
+  .utable th {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--muted); text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line);
+  }
+  .utable td { padding: 11px 10px; border-bottom: 1px solid #f3efe6; font-size: 13px; vertical-align: middle; }
+  .utable tbody tr:hover { background: #fbf9f4; }
+  .u-name { display: flex; align-items: center; gap: 10px; }
+  .u-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .u-name strong { font-weight: 600; font-size: 13px; }
+  .u-email { color: var(--muted); font-size: 12.5px; }
+  .role {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+  }
+  .role svg { width: 11px; height: 11px; }
+  .role-admin { background: rgba(13, 148, 136, 0.12); color: var(--teal); }
+  .role-user { background: #f0ece1; color: var(--muted); }
+  .u-count { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .u-active { color: var(--muted); font-size: 12.5px; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+  .status .sd { width: 7px; height: 7px; border-radius: 50%; }
+  .st-online { color: var(--risk-low); }
+  .st-online .sd { background: var(--risk-low); }
+  .st-offline { color: #9aa69e; }
+  .st-offline .sd { background: #c9c2b2; }
+
+  /* system health */
+  .health-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px dashed #efe9dc; font-size: 13px; }
+  .health-row:last-child { border-bottom: none; }
+  .health-k { color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .health-k .hd { width: 8px; height: 8px; border-radius: 50%; background: var(--risk-low); }
+  .health-v { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px; }
+  .health-bar { width: 70px; height: 6px; background: #f3efe6; border-radius: 4px; overflow: hidden; }
+  .health-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--teal), var(--teal-bright)); }
+  .spark-mini { width: 80px; height: 22px; }
+
+  /* activity feed */
+  .feed-item { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px dashed #efe9dc; }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .feed-body { font-size: 13px; flex: 1; }
+  .feed-body .ft { color: var(--ink); }
+  .feed-body .ft strong { font-weight: 600; }
+  .feed-body .fm { font-size: 11.5px; color: #9aa69e; margin-top: 2px; }
+  .feed-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+
+  .trends-box { position: relative; height: 260px; }
+  @media (max-width: 1180px) { .row-2 { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <a href="#" class="logo" aria-label="SurgeShield home">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+          <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+        </svg>
+      </span>
+      SurgeShield
+    </a>
+
+    <nav class="nav-section" aria-label="Main">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+        Predict
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+        Map View
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/></svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        History
+      </a>
+      <a href="#" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/><path d="M9.5 12l1.8 1.8 3.5-3.6"/></svg>
+        Admin
+        <span class="nav-tag">ADMIN</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>
+        About
+      </a>
+    </nav>
+
+    <div class="sep" role="presentation"></div>
+    <p class="nav-label">Account</p>
+    <nav class="nav-section" aria-label="Account">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+        Settings
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </a>
+    </nav>
+
+    <div class="spacer"></div>
+    <div class="user-card">
+      <div class="avatar" aria-hidden="true">GN</div>
+      <div class="user-meta">
+        <p class="name">Ghislain N. <span class="admin-chip">ADMIN</span></p>
+        <p class="email">ghislain@surgeshield.app</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <h1>System Overview</h1>
+      <span class="admin-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Admin Access
+      </span>
+    </div>
+
+    <!-- 5 stat cards -->
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-head"><span class="stat-title">Total Users</span><span class="stat-ic ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.7-3 2.9-4.5 5.5-4.5s4.8 1.5 5.5 4.5"/><path d="M16 5a3 3 0 0 1 0 6"/></svg></span></div>
+        <p class="stat-num">156</p>
+        <p class="stat-foot up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>12 this week</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-head"><span class="stat-title">Total Predictions</span><span class="stat-ic ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg></span></div>
+        <p class="stat-num">1,847</p>
+        <p class="stat-foot up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>89 this week</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-head"><span class="stat-title">Flood Detection Rate</span><span class="stat-ic ic-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4.5 13H11l-1 9 8.5-11H12l1-9z"/></svg></span></div>
+        <p class="stat-num">34.2%</p>
+        <p class="stat-foot">634 floods detected</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-head"><span class="stat-title">Predictions Today</span><span class="stat-ic ic-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/></svg></span></div>
+        <p class="stat-num">23</p>
+        <div class="mini-spark" aria-hidden="true">
+          <span style="height:40%"></span><span style="height:60%"></span><span style="height:35%"></span><span style="height:75%"></span><span style="height:55%"></span><span style="height:90%"></span><span style="height:70%"></span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-head"><span class="stat-title">API Health</span><span class="stat-ic ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span></div>
+        <p class="stat-num" style="font-size:22px;display:flex;align-items:center;gap:9px;">Online <span class="online-dot"></span></p>
+        <p class="stat-foot">Response: 142 ms</p>
+      </div>
+    </section>
+
+    <!-- user management + system health -->
+    <div class="row-2">
+      <section class="card card-pad">
+        <div class="card-head-flex">
+          <h2 style="margin-bottom:0;">Registered Users</h2>
+          <span class="mini-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg>
+            <input type="text" placeholder="Search users...">
+          </span>
+        </div>
+        <table class="utable">
+          <thead>
+            <tr><th>User</th><th>Role</th><th>Predictions</th><th>Last Active</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="u-name"><span class="u-av" style="background:linear-gradient(135deg,#2dd4bf,#0f766e);">GN</span><div><strong>Ghislain N.</strong><div class="u-email">ghis***@gmail.com</div></div></div></td>
+              <td><span class="role role-admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>Admin</span></td>
+              <td class="u-count">24</td><td class="u-active">2 min ago</td>
+              <td><span class="status st-online"><span class="sd"></span>Online</span></td>
+            </tr>
+            <tr>
+              <td><div class="u-name"><span class="u-av" style="background:linear-gradient(135deg,#f472b6,#be185d);">MK</span><div><strong>Marie K.</strong><div class="u-email">mar***@yahoo.com</div></div></div></td>
+              <td><span class="role role-user">User</span></td>
+              <td class="u-count">18</td><td class="u-active">1 hr ago</td>
+              <td><span class="status st-online"><span class="sd"></span>Online</span></td>
+            </tr>
+            <tr>
+              <td><div class="u-name"><span class="u-av" style="background:linear-gradient(135deg,#60a5fa,#1d4ed8);">PE</span><div><strong>Paul E.</strong><div class="u-email">pau***@gmail.com</div></div></div></td>
+              <td><span class="role role-user">User</span></td>
+              <td class="u-count">45</td><td class="u-active">3 hrs ago</td>
+              <td><span class="status st-offline"><span class="sd"></span>Offline</span></td>
+            </tr>
+            <tr>
+              <td><div class="u-name"><span class="u-av" style="background:linear-gradient(135deg,#fbbf24,#b45309);">ST</span><div><strong>Sandra T.</strong><div class="u-email">san***@ictu.edu</div></div></div></td>
+              <td><span class="role role-user">User</span></td>
+              <td class="u-count">7</td><td class="u-active">1 day ago</td>
+              <td><span class="status st-offline"><span class="sd"></span>Offline</span></td>
+            </tr>
+            <tr>
+              <td><div class="u-name"><span class="u-av" style="background:linear-gradient(135deg,#a78bfa,#6d28d9);">YT</span><div><strong>Yuki T.</strong><div class="u-email">yuk***@gmail.com</div></div></div></td>
+              <td><span class="role role-user">User</span></td>
+              <td class="u-count">3</td><td class="u-active">2 days ago</td>
+              <td><span class="status st-offline"><span class="sd"></span>Offline</span></td>
+            </tr>
+            <tr>
+              <td><div class="u-name"><span class="u-av" style="background:linear-gradient(135deg,#34d399,#047857);">CM</span><div><strong>Carlos M.</strong><div class="u-email">car***@outlook.com</div></div></div></td>
+              <td><span class="role role-user">User</span></td>
+              <td class="u-count">31</td><td class="u-active">4 days ago</td>
+              <td><span class="status st-offline"><span class="sd"></span>Offline</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card card-pad">
+        <h2>System Health</h2>
+        <div class="health-row">
+          <span class="health-k"><span class="hd"></span>ML API Status</span>
+          <span class="health-v">Online — XGBoost loaded</span>
+        </div>
+        <div class="health-row">
+          <span class="health-k">Model Accuracy</span>
+          <span class="health-v"><span class="health-bar"><i style="width:93.2%"></i></span>93.2%</span>
+        </div>
+        <div class="health-row">
+          <span class="health-k">Last Model Training</span>
+          <span class="health-v">Jun 10, 2026</span>
+        </div>
+        <div class="health-row">
+          <span class="health-k">Avg API Response</span>
+          <span class="health-v"><canvas id="respSpark" class="spark-mini"></canvas>142 ms</span>
+        </div>
+        <div class="health-row">
+          <span class="health-k">Server Uptime</span>
+          <span class="health-v">99.8% · 12d 4h</span>
+        </div>
+        <div class="health-row">
+          <span class="health-k"><span class="hd"></span>Database Status</span>
+          <span class="health-v">Convex Connected</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- activity feed -->
+    <section class="card card-pad full">
+      <h2>Recent Platform Activity</h2>
+      <div class="feed-item">
+        <span class="feed-dot" style="background:var(--risk-high);"></span>
+        <div class="feed-body"><p class="ft"><strong>Alex R.</strong> predicted <strong style="color:#b91c1c;">HIGH RISK (87%)</strong> for Bangkok, Thailand</p><p class="fm">2 min ago</p></div>
+      </div>
+      <div class="feed-item">
+        <span class="feed-dot" style="background:var(--risk-mod);"></span>
+        <div class="feed-body"><p class="ft"><strong>Maria S.</strong> predicted <strong style="color:#b45309;">MODERATE RISK (54%)</strong> for Houston, Texas</p><p class="fm">15 min ago</p></div>
+      </div>
+      <div class="feed-item">
+        <span class="feed-dot" style="background:var(--risk-low);"></span>
+        <div class="feed-body"><p class="ft"><strong>James W.</strong> predicted <strong style="color:#15803d;">LOW RISK (12%)</strong> for London, UK</p><p class="fm">1 hr ago</p></div>
+      </div>
+      <div class="feed-item">
+        <span class="feed-dot" style="background:var(--teal);"></span>
+        <div class="feed-body"><p class="ft"><strong>Priya K.</strong> saved location <strong>"Mumbai, India"</strong></p><p class="fm">1 hr ago</p></div>
+      </div>
+      <div class="feed-item">
+        <span class="feed-dot" style="background:var(--risk-crit);"></span>
+        <div class="feed-body"><p class="ft"><strong>Carlos M.</strong> predicted <strong style="color:#7f1d1d;">CRITICAL RISK (95%)</strong> for Jakarta, Indonesia</p><p class="fm">2 hrs ago</p></div>
+      </div>
+      <div class="feed-item">
+        <span class="feed-dot" style="background:#2563eb;"></span>
+        <div class="feed-body"><p class="ft">New user registered: <strong>Yuki T.</strong></p><p class="fm">3 hrs ago</p></div>
+      </div>
+    </section>
+
+    <!-- prediction trends -->
+    <section class="card card-pad full">
+      <h2>Prediction Trends — Last 30 Days</h2>
+      <div class="trends-box"><canvas id="trendsChart"></canvas></div>
+    </section>
+  </main>
+</div>
+
+<script>
+  Chart.defaults.font.family = 'Inter, sans-serif';
+  Chart.defaults.color = '#5c6b62';
+
+  // response sparkline
+  new Chart(document.getElementById('respSpark'), {
+    type: 'line',
+    data: { labels: Array(12).fill(''), datasets: [{ data: [150,138,145,160,142,135,148,140,155,138,142,140], borderColor: '#14b8a6', borderWidth: 1.6, pointRadius: 0, tension: 0.4, fill: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+  });
+
+  // prediction trends
+  const days = Array.from({ length: 30 }, (_, i) => i + 1);
+  const allPreds = [38,42,35,50,47,55,61,58,49,63,70,66,59,72,68,75,71,80,77,69,84,79,88,82,90,86,95,89,98,94];
+  const highPreds = allPreds.map(v => Math.round(v * (0.28 + Math.random() * 0.1)));
+  new Chart(document.getElementById('trendsChart'), {
+    type: 'line',
+    data: {
+      labels: days,
+      datasets: [
+        {
+          label: 'All Predictions', data: allPreds,
+          borderColor: '#0d9488', borderWidth: 2.5, pointRadius: 0, tension: 0.35,
+          fill: true, backgroundColor: (ctx) => {
+            const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 260);
+            g.addColorStop(0, 'rgba(13,148,136,0.22)'); g.addColorStop(1, 'rgba(13,148,136,0)');
+            return g;
+          }
+        },
+        {
+          label: 'High / Critical Risk', data: highPreds,
+          borderColor: '#dc2626', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, tension: 0.35, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false }, title: { display: true, text: 'Day of month', font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: '#f1ece1' } }
+      },
+      plugins: {
+        legend: { position: 'top', align: 'end', labels: { boxWidth: 16, padding: 14, font: { size: 12 } } },
+        tooltip: { backgroundColor: '#1a3a2a', padding: 10, cornerRadius: 8 }
+      }
+    }
+  });
+</script>
+</body>
+</html>

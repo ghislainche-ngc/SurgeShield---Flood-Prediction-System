@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign In — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --charcoal: #1c1c1c;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --radius-md: 14px;
+    --radius-pill: 100px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    background: var(--cream);
+  }
+  .split { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+
+  /* ============ LEFT VISUAL PANEL ============ */
+  .visual {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(28px, 5vh, 48px) clamp(36px, 4vw, 56px);
+    color: #fff;
+    overflow: hidden;
+    background:
+      linear-gradient(165deg, rgba(12, 26, 19, 0.86) 0%, rgba(18, 43, 31, 0.72) 50%, rgba(13, 60, 48, 0.92) 100%),
+      url('https://images.unsplash.com/photo-1437482078695-73f5ca6c96e2?auto=format&fit=crop&w=1400&q=80') center / cover no-repeat,
+      var(--forest-deep);
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 20px;
+    color: #fff;
+    text-decoration: none;
+    align-self: flex-start;
+    position: relative;
+    z-index: 2;
+  }
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.45);
+  }
+  .logo-mark svg { width: 21px; height: 21px; }
+  .visual-quote { position: relative; z-index: 2; max-width: 470px; }
+  .visual-quote blockquote {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(30px, 2.8vw, 40px);
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .visual-quote blockquote span { color: var(--teal-bright); }
+  .visual-meta {
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .visual-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+  .visual-foot {
+    position: relative;
+    z-index: 2;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  /* decorative contour lines */
+  .contours {
+    position: absolute;
+    bottom: -60px; right: -80px;
+    width: 560px; height: 560px;
+    opacity: 0.6;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ============ RIGHT FORM PANEL ============ */
+  .panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(24px, 5vh, 56px) 48px;
+    background: var(--cream);
+  }
+  .form-box { width: 100%; max-width: 420px; }
+  .form-box h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--forest);
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+  .form-sub { font-size: 15px; color: var(--muted); margin-bottom: 36px; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .input-wrap { position: relative; }
+  .input-wrap .lead-icon {
+    position: absolute;
+    left: 16px; top: 50%;
+    transform: translateY(-50%);
+    width: 19px; height: 19px;
+    color: #9aa69e;
+    pointer-events: none;
+  }
+  .input-wrap input {
+    width: 100%;
+    height: 52px;
+    padding: 0 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 10px rgba(26, 58, 42, 0.04);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .input-wrap input::placeholder { color: #b3bcb5; }
+  .input-wrap input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.14);
+  }
+  .toggle-vis {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    width: 38px; height: 38px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: none;
+    border-radius: 10px;
+    color: #9aa69e;
+    cursor: pointer;
+  }
+  .toggle-vis:hover { background: rgba(13, 148, 136, 0.08); color: var(--teal); }
+  .toggle-vis svg { width: 19px; height: 19px; }
+
+  .row-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px 0 26px;
+    font-size: 13.5px;
+  }
+  .remember { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  .remember input {
+    width: 16px; height: 16px;
+    accent-color: var(--teal);
+  }
+  .forgot { color: var(--teal); font-weight: 600; text-decoration: none; }
+  .forgot:hover { text-decoration: underline; }
+
+  .btn-submit {
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-submit:hover { transform: translateY(-1.5px); box-shadow: 0 10px 24px rgba(13, 148, 136, 0.45); }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit svg { width: 17px; height: 17px; }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 28px 0;
+    color: #9aa69e;
+    font-size: 13px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .btn-social {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .btn-social:hover { border-color: #c9c2b2; background: #fffdf9; }
+  .btn-social svg { width: 19px; height: 19px; }
+
+  .switch-auth {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .switch-auth a { color: var(--teal); font-weight: 600; text-decoration: none; }
+  .switch-auth a:hover { text-decoration: underline; }
+
+  /* short viewports (laptops) — compress so the form never scrolls */
+  @media (max-height: 780px) {
+    .form-box h1 { font-size: 31px; margin-bottom: 8px; }
+    .form-sub { margin-bottom: 24px; }
+    .field { margin-bottom: 14px; }
+    .input-wrap input { height: 46px; }
+    .row-between { margin: 2px 0 18px; }
+    .btn-submit { height: 47px; }
+    .divider { margin: 18px 0; }
+    .btn-social { height: 45px; }
+    .switch-auth { margin-top: 20px; }
+    .visual-quote blockquote { font-size: clamp(26px, 2.4vw, 32px); }
+  }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .visual { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="split">
+
+  <!-- ============ LEFT: VISUAL ============ -->
+  <aside class="visual">
+    <a href="#" class="logo" aria-label="SurgeShield home">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+          <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+        </svg>
+      </span>
+      SurgeShield
+    </a>
+
+    <div class="visual-quote">
+      <blockquote>&ldquo;Every prediction is a chance to <span>protect a life</span>.&rdquo;</blockquote>
+      <div class="visual-meta">
+        <span>Powered by XGBoost</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>93.2% Accuracy</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>10,000+ Training Observations</span>
+      </div>
+    </div>
+
+    <p class="visual-foot">© 2026 SurgeShield · Global Flood Intelligence</p>
+
+    <svg class="contours" viewBox="0 0 560 560" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g stroke="#14b8a6" stroke-opacity="0.35" stroke-width="1.3">
+        <path d="M280 120c100 0 190 62 190 160s-90 160-190 160S90 378 90 280s90-160 190-160z"/>
+        <path d="M280 160c80 0 150 49 150 120s-70 120-150 120-150-49-150-120 70-120 150-120z"/>
+        <path d="M280 200c58 0 110 35 110 80s-52 80-110 80-110-35-110-80 52-80 110-80z"/>
+        <path d="M280 240c36 0 70 18 70 40s-34 40-70 40-70-18-70-40 34-40 70-40z"/>
+        <path d="M40 460c70-36 160-44 250-6s180 42 270-4"/>
+        <path d="M40 500c70-36 160-44 250-6s180 42 270-4"/>
+        <path d="M40 60c70-36 160-44 250-6s180 42 270-4"/>
+      </g>
+    </svg>
+  </aside>
+
+  <!-- ============ RIGHT: FORM ============ -->
+  <main class="panel">
+    <div class="form-box">
+      <h1>Welcome back</h1>
+      <p class="form-sub">Sign in to access your flood prediction dashboard.</p>
+
+      <form>
+        <div class="field">
+          <label for="email">Email address</label>
+          <div class="input-wrap">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/>
+            </svg>
+            <input type="email" id="email" placeholder="you@example.com" autocomplete="email" value="ghislain@surgeshield.app">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4.5" y="10" width="15" height="10" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/>
+            </svg>
+            <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" value="••••••••••">
+            <button type="button" class="toggle-vis" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="row-between">
+          <label class="remember"><input type="checkbox" checked> Remember me</label>
+          <a href="#" class="forgot">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          Sign In
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+
+      <div class="divider">or continue with</div>
+
+      <div class="social-row">
+        <button type="button" class="btn-social">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.46a5.53 5.53 0 0 1-2.4 3.62v3h3.87c2.27-2.09 3.57-5.17 3.57-8.81z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.87-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.29v3.1A12 12 0 0 0 12 24z"/>
+            <path fill="#FBBC05" d="M5.27 14.28A7.2 7.2 0 0 1 4.9 12c0-.79.14-1.56.37-2.28v-3.1H1.29a12 12 0 0 0 0 10.76l3.98-3.1z"/>
+            <path fill="#EA4335" d="M12 4.77c1.76 0 3.35.6 4.6 1.8l3.43-3.44A11.97 11.97 0 0 0 12 0 12 12 0 0 0 1.29 6.62l3.98 3.1C6.22 6.88 8.87 4.77 12 4.77z"/>
+          </svg>
+          Google
+        </button>
+        <button type="button" class="btn-social">
+          <svg viewBox="0 0 24 24" fill="#1c1c1c" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-1.94c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .3.2.67.8.55A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+          </svg>
+          GitHub
+        </button>
+      </div>
+
+      <p class="switch-auth">Don't have an account? <a href="#">Sign up</a></p>
+    </div>
+  </main>
+
+</div>
+
+</body>
+</html>

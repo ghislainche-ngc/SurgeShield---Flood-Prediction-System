@@ -1,0 +1,135 @@
+{
+  "generated_at": "2026-06-13T16:47:28.612136+00:00",
+  "dataset": "flood_clean.csv",
+  "protocol": {
+    "split": "stratified 80/20",
+    "cross_validation": "5-fold stratified",
+    "selection_metric": "f1",
+    "random_state": 42
+  },
+  "n_train": 8000,
+  "n_test": 2000,
+  "feature_count_raw": 11,
+  "feature_count_encoded": 19,
+  "encoded_feature_names": [
+    "Rainfall",
+    "Temperature",
+    "Humidity",
+    "River Discharge",
+    "Water Level",
+    "Elevation",
+    "Population Density",
+    "Infrastructure",
+    "Historical Floods",
+    "Land Cover_Agricultural",
+    "Land Cover_Desert",
+    "Land Cover_Forest",
+    "Land Cover_Urban",
+    "Land Cover_Water Body",
+    "Soil Type_Clay",
+    "Soil Type_Loam",
+    "Soil Type_Peat",
+    "Soil Type_Sandy",
+    "Soil Type_Silt"
+  ],
+  "class_balance_train": {
+    "0": 3954,
+    "1": 4046
+  },
+  "best_model": "Logistic Regression",
+  "models": {
+    "Logistic Regression": {
+      "cv": {
+        "accuracy": {
+          "mean": 0.513875,
+          "std": 0.005855019214315208
+        },
+        "precision": {
+          "mean": 0.5167326789787003,
+          "std": 0.004935514250701197
+        },
+        "recall": {
+          "mean": 0.5971304308016299,
+          "std": 0.013086315709052667
+        },
+        "f1": {
+          "mean": 0.5540068241615387,
+          "std": 0.008421037829818423
+        },
+        "roc_auc": {
+          "mean": 0.5185828802390761,
+          "std": 0.009388351752081296
+        }
+      },
+      "test": {
+        "accuracy": 0.5025,
+        "precision": 0.5068027210884354,
+        "recall": 0.5895153313550939,
+        "f1": 0.5450388660265203,
+        "roc_auc": 0.4984343105515767
+      }
+    },
+    "Random Forest": {
+      "cv": {
+        "accuracy": {
+          "mean": 0.511125,
+          "std": 0.006064754735354104
+        },
+        "precision": {
+          "mean": 0.5162477975887931,
+          "std": 0.005807318834181356
+        },
+        "recall": {
+          "mean": 0.5286679180210289,
+          "std": 0.010664907004916985
+        },
+        "f1": {
+          "mean": 0.5223694803080691,
+          "std": 0.00805731738535542
+        },
+        "roc_auc": {
+          "mean": 0.5122842767004647,
+          "std": 0.011455033180724206
+        }
+      },
+      "test": {
+        "accuracy": 0.502,
+        "precision": 0.5071090047393365,
+        "recall": 0.5291790306627102,
+        "f1": 0.5179090029041626,
+        "roc_auc": 0.4942783076752287
+      }
+    },
+    "XGBoost": {
+      "cv": {
+        "accuracy": {
+          "mean": 0.512875,
+          "std": 0.011191514642799685
+        },
+        "precision": {
+          "mean": 0.5183974044869027,
+          "std": 0.011472978694777671
+        },
+        "recall": {
+          "mean": 0.5252077706053808,
+          "std": 0.010996033878582655
+        },
+        "f1": {
+          "mean": 0.5216685678314211,
+          "std": 0.008258290298515407
+        },
+        "roc_auc": {
+          "mean": 0.5156389635641203,
+          "std": 0.013965721816068425
+        }
+      },
+      "test": {
+        "accuracy": 0.495,
+        "precision": 0.5004878048780488,
+        "recall": 0.5074183976261127,
+        "f1": 0.5039292730844793,
+        "roc_auc": 0.49125944239252944
+      }
+    }
+  }
+}

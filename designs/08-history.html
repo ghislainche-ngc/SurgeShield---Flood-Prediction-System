@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>History — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --risk-low: #16a34a;
+    --risk-mod: #d97706;
+    --risk-high: #dc2626;
+    --risk-crit: #7f1d1d;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 6px 24px rgba(26, 58, 42, 0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+  /* ============ SIDEBAR (shared shell) ============ */
+  .sidebar {
+    background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    padding: 26px 16px 20px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 19px; color: #fff;
+    text-decoration: none; padding: 0 10px; margin-bottom: 34px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 10px; display: grid; place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4); flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .nav-section { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.66); text-decoration: none;
+    font-size: 14.5px; font-weight: 500;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .nav-item svg { width: 19px; height: 19px; stroke-width: 1.8; flex-shrink: 0; }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+  .nav-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(255, 255, 255, 0.38);
+    padding: 0 14px; margin-bottom: 8px;
+  }
+  .sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 18px 10px; }
+  .spacer { flex: 1; }
+  .user-card {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 10px; border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .avatar {
+    position: relative; width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid; place-items: center;
+    font-size: 13.5px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .avatar::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #22c55e; border: 2px solid var(--forest-deep);
+  }
+  .user-meta { min-width: 0; }
+  .user-meta .name { font-size: 13.5px; font-weight: 600; }
+  .user-meta .email {
+    font-size: 11.5px; color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ============ MAIN ============ */
+  .main { padding: 30px 36px 44px; min-width: 0; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
+  .topbar h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px; font-weight: 700; color: var(--forest);
+    letter-spacing: -0.01em; margin-bottom: 5px;
+  }
+  .topbar p { font-size: 14px; color: var(--muted); }
+  .topbar-actions { display: flex; gap: 12px; }
+  .btn-out {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 42px; padding: 0 18px;
+    background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-md);
+    font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink);
+    cursor: pointer; box-shadow: var(--shadow-soft);
+  }
+  .btn-out svg { width: 16px; height: 16px; stroke-width: 1.9; }
+  .btn-out:hover { border-color: #c9c2b2; }
+  .btn-icon {
+    width: 42px; height: 42px;
+    background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-md);
+    display: grid; place-items: center; color: var(--muted); cursor: pointer;
+    box-shadow: var(--shadow-soft);
+  }
+  .btn-icon svg { width: 17px; height: 17px; stroke-width: 1.9; }
+
+  /* summary stats */
+  .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+  .sum-card {
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md);
+    padding: 14px 18px; box-shadow: var(--shadow-soft);
+  }
+  .sum-card .sk { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .sum-card .sv { font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 700; color: var(--forest); }
+  .sum-card .sv.dot::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+  .sv.high::before { background: var(--risk-high); }
+  .sv.mod::before { background: var(--risk-mod); }
+  .sv.low::before { background: var(--risk-low); }
+
+  /* filter bar */
+  .filter-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .fpill {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 38px; padding: 0 16px; border-radius: var(--radius-pill);
+    background: #fff; border: 1.5px solid var(--line);
+    font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer;
+  }
+  .fpill .fd { width: 8px; height: 8px; border-radius: 50%; }
+  .fpill.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .filter-spacer { flex: 1; }
+  .finput {
+    display: flex; align-items: center; gap: 9px;
+    height: 38px; padding: 0 14px; border-radius: var(--radius-md);
+    background: #fff; border: 1.5px solid var(--line);
+    font-size: 13px; color: var(--muted);
+  }
+  .finput svg { width: 15px; height: 15px; stroke-width: 1.9; }
+  .finput input { border: none; outline: none; background: none; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); width: 150px; }
+  .fselect {
+    display: flex; align-items: center; gap: 8px;
+    height: 38px; padding: 0 14px; border-radius: var(--radius-md);
+    background: #fff; border: 1.5px solid var(--line);
+    font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer;
+  }
+  .fselect svg { width: 14px; height: 14px; color: #9aa69e; }
+
+  /* table */
+  .table-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); overflow: hidden; }
+  .htable { width: 100%; border-collapse: collapse; }
+  .htable thead th {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); text-align: left; padding: 15px 18px;
+    background: #fbf9f4; border-bottom: 1px solid var(--line);
+  }
+  .htable td { padding: 14px 18px; border-bottom: 1px solid #f3efe6; font-size: 13.5px; vertical-align: middle; }
+  .htable tbody tr:hover { background: #fbf9f4; }
+  .htable .c-id { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .htable .c-loc { font-weight: 600; }
+  .htable .c-date { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .htable .c-prob { font-weight: 700; color: var(--forest); font-variant-numeric: tabular-nums; }
+  .htable .c-factor { color: var(--muted); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px; border-radius: var(--radius-pill);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .b-low { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+  .b-mod { background: rgba(217, 119, 6, 0.13); color: #b45309; }
+  .b-high { background: rgba(220, 38, 38, 0.11); color: #b91c1c; }
+  .b-crit { background: rgba(127, 29, 29, 0.14); color: var(--risk-crit); }
+  .actions-cell { display: flex; gap: 8px; }
+  .act {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: grid; place-items: center; cursor: pointer;
+    border: 1px solid var(--line); background: #fff; color: var(--muted);
+  }
+  .act svg { width: 15px; height: 15px; stroke-width: 1.9; }
+  .act:hover { border-color: #c9c2b2; }
+  .act.del:hover { border-color: var(--risk-high); color: var(--risk-high); }
+
+  /* expanded row */
+  .exp-row td { background: #fbf9f4; padding: 0; }
+  .exp-inner { padding: 4px 18px 22px; }
+  .exp-flag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 700; color: var(--teal); letter-spacing: 0.05em;
+    margin: 8px 0 16px;
+  }
+  .exp-grid-wrap { display: grid; grid-template-columns: 2fr 1.4fr; gap: 28px; }
+  .exp-params { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 22px; }
+  .exp-param { font-size: 12px; color: var(--muted); padding: 6px 0; border-bottom: 1px dashed #e6e0d4; }
+  .exp-param strong { display: block; font-size: 13px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .exp-chart-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .efi-row { display: grid; grid-template-columns: 90px 1fr 36px; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .efi-row .en { font-size: 11.5px; text-align: right; color: var(--ink); }
+  .efi-track { height: 14px; background: #ece6da; border-radius: 5px; overflow: hidden; }
+  .efi-fill { height: 100%; background: linear-gradient(90deg, var(--teal), #34d399); border-radius: 5px; }
+  .efi-row .ev { font-size: 11.5px; font-weight: 700; color: var(--forest); }
+  .exp-model { font-size: 12.5px; color: var(--muted); margin-top: 14px; }
+  .exp-model strong { color: var(--ink); }
+
+  /* pagination */
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
+  .pg-info { font-size: 13px; color: var(--muted); }
+  .pg-btns { display: flex; gap: 6px; }
+  .pg-btn {
+    min-width: 34px; height: 34px; padding: 0 10px; border-radius: 9px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .pg-btn:hover { border-color: #c9c2b2; }
+  .pg-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .pg-btn svg { width: 15px; height: 15px; stroke-width: 2; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <a href="#" class="logo" aria-label="SurgeShield home">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+          <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+        </svg>
+      </span>
+      SurgeShield
+    </a>
+
+    <nav class="nav-section" aria-label="Main">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+        Predict
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+        Map View
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/></svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        History
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>
+        About
+      </a>
+    </nav>
+
+    <div class="sep" role="presentation"></div>
+    <p class="nav-label">Account</p>
+    <nav class="nav-section" aria-label="Account">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+        Settings
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </a>
+    </nav>
+
+    <div class="spacer"></div>
+    <div class="user-card">
+      <div class="avatar" aria-hidden="true">GN</div>
+      <div class="user-meta">
+        <p class="name">Ghislain N.</p>
+        <p class="email">ghislain@surgeshield.app</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Prediction History</h1>
+        <p>Track and review all your past flood predictions.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Export CSV
+        </button>
+        <button class="btn-icon" aria-label="Filter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- summary -->
+    <section class="summary">
+      <div class="sum-card"><p class="sk">Total Predictions</p><p class="sv">24</p></div>
+      <div class="sum-card"><p class="sk">High / Critical</p><p class="sv dot high">5</p></div>
+      <div class="sum-card"><p class="sk">Moderate</p><p class="sv dot mod">8</p></div>
+      <div class="sum-card"><p class="sk">Low Risk</p><p class="sv dot low">11</p></div>
+      <div class="sum-card"><p class="sk">Avg Probability</p><p class="sv">42.3%</p></div>
+    </section>
+
+    <!-- filters -->
+    <div class="filter-bar">
+      <span class="fpill active">All Predictions</span>
+      <span class="fpill"><span class="fd" style="background:var(--risk-high);"></span>High Risk</span>
+      <span class="fpill"><span class="fd" style="background:var(--risk-mod);"></span>Moderate</span>
+      <span class="fpill"><span class="fd" style="background:var(--risk-low);"></span>Low Risk</span>
+      <span class="filter-spacer"></span>
+      <span class="fselect">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+        Jun 1 — Jun 13, 2026
+      </span>
+      <span class="finput">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg>
+        <input type="text" placeholder="Search by location...">
+      </span>
+      <span class="fselect">
+        Newest first
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </span>
+    </div>
+
+    <!-- table -->
+    <div class="table-card">
+      <table class="htable">
+        <thead>
+          <tr>
+            <th>#</th><th>Date &amp; Time</th><th>Location</th><th>Risk Level</th>
+            <th>Probability</th><th>Key Factor</th><th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- expanded row #247 -->
+          <tr>
+            <td class="c-id">#247</td>
+            <td class="c-date">Jun 13, 01:45 AM</td>
+            <td class="c-loc">Bangkok, Thailand</td>
+            <td><span class="badge b-high">HIGH</span></td>
+            <td class="c-prob">87.3%</td>
+            <td class="c-factor">Rainfall (250mm)</td>
+            <td>
+              <div class="actions-cell" style="justify-content:flex-end;">
+                <span class="act" title="Hide details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg></span>
+                <span class="act del" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span>
+              </div>
+            </td>
+          </tr>
+          <tr class="exp-row">
+            <td colspan="7">
+              <div class="exp-inner">
+                <span class="exp-flag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+                  PREDICTION #247 DETAILS
+                </span>
+                <div class="exp-grid-wrap">
+                  <div>
+                    <p class="exp-chart-title">Input Parameters</p>
+                    <div class="exp-params">
+                      <div class="exp-param">Rainfall <strong>250 mm</strong></div>
+                      <div class="exp-param">Temperature <strong>32 °C</strong></div>
+                      <div class="exp-param">Humidity <strong>78%</strong></div>
+                      <div class="exp-param">River Discharge <strong>4,500 m³/s</strong></div>
+                      <div class="exp-param">Water Level <strong>8.2 m</strong></div>
+                      <div class="exp-param">Elevation <strong>120 m</strong></div>
+                      <div class="exp-param">Land Cover <strong>Agricultural</strong></div>
+                      <div class="exp-param">Soil Type <strong>Clay</strong></div>
+                      <div class="exp-param">Pop. Density <strong>5,200 /km²</strong></div>
+                      <div class="exp-param">Infrastructure <strong>Present</strong></div>
+                      <div class="exp-param">Hist. Floods <strong>Yes</strong></div>
+                      <div class="exp-param">Coordinates <strong>13.76, 100.50</strong></div>
+                    </div>
+                    <p class="exp-model">Model: <strong>XGBoost</strong> &nbsp;·&nbsp; Confidence: <strong>87.3%</strong> &nbsp;·&nbsp; Predicted: <strong>Jun 13, 2026 01:45 AM</strong></p>
+                  </div>
+                  <div>
+                    <p class="exp-chart-title">Contributing Factors</p>
+                    <div class="efi-row"><span class="en">Rainfall</span><div class="efi-track"><div class="efi-fill" style="width:100%;"></div></div><span class="ev">32%</span></div>
+                    <div class="efi-row"><span class="en">River Disch.</span><div class="efi-track"><div class="efi-fill" style="width:78%;"></div></div><span class="ev">25%</span></div>
+                    <div class="efi-row"><span class="en">Water Level</span><div class="efi-track"><div class="efi-fill" style="width:56%;"></div></div><span class="ev">18%</span></div>
+                    <div class="efi-row"><span class="en">Elevation</span><div class="efi-track"><div class="efi-fill" style="width:37%;"></div></div><span class="ev">12%</span></div>
+                    <div class="efi-row"><span class="en">Humidity</span><div class="efi-track"><div class="efi-fill" style="width:25%;"></div></div><span class="ev">8%</span></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="c-id">#246</td><td class="c-date">Jun 12, 04:22 PM</td><td class="c-loc">Houston, Texas</td>
+            <td><span class="badge b-mod">MODERATE</span></td><td class="c-prob">54.1%</td><td class="c-factor">River Discharge</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#245</td><td class="c-date">Jun 12, 10:15 AM</td><td class="c-loc">Zurich, Switzerland</td>
+            <td><span class="badge b-low">LOW</span></td><td class="c-prob">18.4%</td><td class="c-factor">Elevation (1,200m)</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#244</td><td class="c-date">Jun 11, 09:30 PM</td><td class="c-loc">Mumbai, India</td>
+            <td><span class="badge b-crit">CRITICAL</span></td><td class="c-prob">94.7%</td><td class="c-factor">Water Level (12.3m)</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#243</td><td class="c-date">Jun 11, 02:18 PM</td><td class="c-loc">Nairobi, Kenya</td>
+            <td><span class="badge b-low">LOW</span></td><td class="c-prob">12.8%</td><td class="c-factor">Elevation (750m)</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#242</td><td class="c-date">Jun 10, 08:05 PM</td><td class="c-loc">Jakarta, Indonesia</td>
+            <td><span class="badge b-high">HIGH</span></td><td class="c-prob">81.2%</td><td class="c-factor">Rainfall (310mm)</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#241</td><td class="c-date">Jun 10, 11:42 AM</td><td class="c-loc">London, UK</td>
+            <td><span class="badge b-mod">MODERATE</span></td><td class="c-prob">47.6%</td><td class="c-factor">Humidity (88%)</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#240</td><td class="c-date">Jun 9, 06:50 PM</td><td class="c-loc">Lagos, Nigeria</td>
+            <td><span class="badge b-high">HIGH</span></td><td class="c-prob">76.9%</td><td class="c-factor">River Discharge</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+          <tr>
+            <td class="c-id">#239</td><td class="c-date">Jun 9, 09:12 AM</td><td class="c-loc">Cairo, Egypt</td>
+            <td><span class="badge b-low">LOW</span></td><td class="c-prob">9.3%</td><td class="c-factor">Rainfall (15mm)</td>
+            <td><div class="actions-cell" style="justify-content:flex-end;"><span class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="act del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></span></div></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        <span class="pg-info">Showing 1–10 of 24 predictions</span>
+        <div class="pg-btns">
+          <button class="pg-btn" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <button class="pg-btn active">1</button>
+          <button class="pg-btn">2</button>
+          <button class="pg-btn">3</button>
+          <button class="pg-btn" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

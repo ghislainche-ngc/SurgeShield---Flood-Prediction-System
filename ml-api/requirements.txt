@@ -1,0 +1,26 @@
+# SurgeShield ML microservice dependencies
+# Three models: Logistic Regression + Random Forest (scikit-learn), XGBoost (xgboost)
+
+# --- API layer ---
+flask
+flask-cors
+gunicorn
+requests
+
+# --- Data + numerics ---
+pandas
+numpy
+
+# --- Modeling ---
+scikit-learn      # Logistic Regression, Random Forest, preprocessing, metrics
+xgboost           # XGBoost classifier
+shap              # model interpretation (feature attributions)
+joblib            # persist model / scaler / encoder artifacts
+
+# --- Visualization (EDA + interpretation figures) ---
+matplotlib
+seaborn
+folium            # interactive maps (geographic visualization)
+
+# --- Notebooks ---
+jupyter

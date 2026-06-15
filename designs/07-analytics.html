@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytics — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 6px 24px rgba(26, 58, 42, 0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+  /* ============ SIDEBAR (shared shell) ============ */
+  .sidebar {
+    background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    padding: 26px 16px 20px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 19px; color: #fff;
+    text-decoration: none; padding: 0 10px; margin-bottom: 34px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 10px; display: grid; place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4); flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .nav-section { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.66); text-decoration: none;
+    font-size: 14.5px; font-weight: 500;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .nav-item svg { width: 19px; height: 19px; stroke-width: 1.8; flex-shrink: 0; }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+  .nav-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(255, 255, 255, 0.38);
+    padding: 0 14px; margin-bottom: 8px;
+  }
+  .sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 18px 10px; }
+  .spacer { flex: 1; }
+  .user-card {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 10px; border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .avatar {
+    position: relative; width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid; place-items: center;
+    font-size: 13.5px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .avatar::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #22c55e; border: 2px solid var(--forest-deep);
+  }
+  .user-meta { min-width: 0; }
+  .user-meta .name { font-size: 13.5px; font-weight: 600; }
+  .user-meta .email {
+    font-size: 11.5px; color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ============ MAIN ============ */
+  .main { padding: 30px 36px 44px; min-width: 0; }
+  .page-head h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px; font-weight: 700; color: var(--forest);
+    letter-spacing: -0.01em; margin-bottom: 6px;
+  }
+  .page-head p { font-size: 14.5px; color: var(--muted); margin-bottom: 24px; }
+
+  .card {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
+  }
+  .card-pad { padding: 24px 26px; }
+  .card h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 19px; font-weight: 700; color: var(--forest); margin-bottom: 4px;
+  }
+  .card .csub { font-size: 12.5px; color: var(--muted); margin-bottom: 20px; }
+
+  /* best model banner */
+  .best {
+    display: flex; align-items: center; gap: 28px;
+    padding: 24px 30px;
+    background:
+      radial-gradient(circle at 90% 50%, rgba(20, 184, 166, 0.12), transparent 55%),
+      linear-gradient(120deg, #fff 0%, #f3faf8 100%);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--teal);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 22px;
+  }
+  .best-trophy {
+    width: 58px; height: 58px; border-radius: 16px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--teal), var(--teal-bright));
+    display: grid; place-items: center; color: #fff;
+    box-shadow: 0 8px 20px rgba(13, 148, 136, 0.35);
+  }
+  .best-trophy svg { width: 28px; height: 28px; stroke-width: 1.8; }
+  .best-text .be-eyebrow { font-size: 12px; font-weight: 600; color: var(--teal); letter-spacing: 0.04em; }
+  .best-text h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 27px; font-weight: 700; color: var(--forest); }
+  .best-pills { display: flex; gap: 12px; margin-left: auto; flex-wrap: wrap; }
+  .pill {
+    text-align: center; padding: 10px 20px;
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md);
+  }
+  .pill .pv { font-family: 'Playfair Display', Georgia, serif; font-size: 21px; font-weight: 700; color: var(--forest); }
+  .pill .pk { font-size: 11px; color: var(--muted); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 22px; }
+  .full { margin-bottom: 22px; }
+
+  /* comparison table */
+  .cmp-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+  .cmp-table th, .cmp-table td { padding: 10px 12px; text-align: center; font-variant-numeric: tabular-nums; }
+  .cmp-table th { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); }
+  .cmp-table td { border-bottom: 1px solid #f1ece1; }
+  .cmp-table td:first-child, .cmp-table th:first-child { text-align: left; font-weight: 600; }
+  .cmp-table tr.best-row { background: rgba(13, 148, 136, 0.06); }
+  .cmp-table tr.best-row td:first-child { color: var(--teal); }
+  .cmp-table tr.best-row td { font-weight: 700; }
+  .tag-best { font-size: 9.5px; font-weight: 700; background: var(--teal); color: #fff; padding: 2px 7px; border-radius: 100px; margin-left: 7px; vertical-align: middle; }
+
+  /* confusion matrix */
+  .cm-wrap { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 8px; }
+  .cm-ylabel {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    display: grid; place-items: center; letter-spacing: 0.04em;
+  }
+  .cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cm-cell {
+    border-radius: var(--radius-md); padding: 20px 16px; text-align: center;
+    position: relative;
+  }
+  .cm-cell .cm-num { font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; }
+  .cm-cell .cm-tag { font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .cm-tn { background: rgba(22, 163, 74, 0.14); color: #15803d; }
+  .cm-fp { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
+  .cm-fn { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
+  .cm-tp { background: rgba(22, 163, 74, 0.85); color: #fff; }
+  .cm-xlabels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 0 0; }
+  .cm-xlabels span { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .cm-caption { font-size: 12px; color: #9aa69e; margin-top: 14px; }
+
+  /* feature importance */
+  .fi-row { display: grid; grid-template-columns: 150px 1fr 52px; align-items: center; gap: 12px; margin-bottom: 11px; }
+  .fi-row .fi-name { font-size: 12.5px; font-weight: 500; text-align: right; color: var(--ink); }
+  .fi-track { height: 18px; background: #f3efe6; border-radius: 6px; overflow: hidden; }
+  .fi-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #0f766e 0%, #34d399 100%); }
+  .fi-row .fi-val { font-size: 12.5px; font-weight: 700; color: var(--forest); font-variant-numeric: tabular-nums; }
+  .fi-caption { font-size: 12px; color: #9aa69e; margin-top: 14px; }
+
+  /* dataset overview */
+  .ds-top { display: flex; align-items: center; gap: 22px; margin-bottom: 18px; }
+  .ds-donut { width: 120px; height: 120px; flex-shrink: 0; position: relative; }
+  .ds-donut .dc {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    text-align: center;
+  }
+  .ds-donut .dc .dn { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 700; color: var(--forest); line-height: 1; }
+  .ds-donut .dc .dl { font-size: 10px; color: var(--muted); }
+  .ds-legend { display: flex; flex-direction: column; gap: 10px; }
+  .ds-leg-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .ds-leg-row .ld { width: 11px; height: 11px; border-radius: 3px; }
+  .ds-leg-row strong { font-weight: 700; color: var(--ink); }
+  .ds-leg-row .lp { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ds-stats { border-top: 1px dashed #efe9dc; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .ds-stat-row { display: flex; justify-content: space-between; font-size: 13px; }
+  .ds-stat-row .k { color: var(--muted); }
+  .ds-stat-row .v { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ds-note { font-size: 11.5px; color: #9aa69e; margin-top: 12px; }
+
+  .chart-box { position: relative; height: 300px; }
+  .roc-box { position: relative; height: 290px; }
+  @media (max-width: 1080px) { .row-2 { grid-template-columns: 1fr; } .best { flex-wrap: wrap; } .best-pills { margin-left: 0; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <a href="#" class="logo" aria-label="SurgeShield home">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+          <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+        </svg>
+      </span>
+      SurgeShield
+    </a>
+
+    <nav class="nav-section" aria-label="Main">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+        Predict
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+        Map View
+      </a>
+      <a href="#" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/></svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        History
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>
+        About
+      </a>
+    </nav>
+
+    <div class="sep" role="presentation"></div>
+    <p class="nav-label">Account</p>
+    <nav class="nav-section" aria-label="Account">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+        Settings
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </a>
+    </nav>
+
+    <div class="spacer"></div>
+    <div class="user-card">
+      <div class="avatar" aria-hidden="true">GN</div>
+      <div class="user-meta">
+        <p class="name">Ghislain N.</p>
+        <p class="email">ghislain@surgeshield.app</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="page-head">
+      <h1>Model Analytics</h1>
+      <p>Machine learning performance metrics across 5 trained models on the flood risk dataset.</p>
+    </div>
+
+    <!-- BEST MODEL -->
+    <section class="best">
+      <span class="best-trophy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v3a6 6 0 0 1-12 0V4z"/><path d="M6 5H3.5v1.5A3 3 0 0 0 6 9M18 5h2.5v1.5A3 3 0 0 1 18 9"/><path d="M12 13v4M9 21h6M10 17h4v4h-4z"/></svg>
+      </span>
+      <div class="best-text">
+        <p class="be-eyebrow">Best Performing Model</p>
+        <h2>XGBoost Classifier</h2>
+      </div>
+      <div class="best-pills">
+        <div class="pill"><div class="pv">93.2%</div><div class="pk">Accuracy</div></div>
+        <div class="pill"><div class="pv">0.933</div><div class="pk">F1 Score</div></div>
+        <div class="pill"><div class="pv">0.974</div><div class="pk">ROC-AUC</div></div>
+        <div class="pill"><div class="pv">94.5%</div><div class="pk">Recall</div></div>
+      </div>
+    </section>
+
+    <!-- MODEL COMPARISON -->
+    <section class="card card-pad full">
+      <h2>Model Performance Comparison</h2>
+      <p class="csub">Five algorithms evaluated across five metrics — XGBoost leads on every measure</p>
+      <div class="chart-box"><canvas id="cmpChart"></canvas></div>
+
+      <table class="cmp-table">
+        <thead>
+          <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>ROC-AUC</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Logistic Regression</td><td>0.847</td><td>0.851</td><td>0.838</td><td>0.844</td><td>0.910</td></tr>
+          <tr><td>Random Forest</td><td>0.911</td><td>0.908</td><td>0.919</td><td>0.913</td><td>0.962</td></tr>
+          <tr class="best-row"><td>XGBoost<span class="tag-best">BEST</span></td><td>0.932</td><td>0.921</td><td>0.945</td><td>0.933</td><td>0.974</td></tr>
+          <tr><td>Gradient Boosting</td><td>0.918</td><td>0.914</td><td>0.926</td><td>0.920</td><td>0.967</td></tr>
+          <tr><td>SVM</td><td>0.873</td><td>0.869</td><td>0.881</td><td>0.875</td><td>0.931</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CONFUSION + ROC -->
+    <div class="row-2">
+      <section class="card card-pad">
+        <h2>Confusion Matrix — XGBoost</h2>
+        <p class="csub">Evaluated on 2,000 held-out test observations</p>
+        <div class="cm-wrap">
+          <div class="cm-ylabel">Actual Class</div>
+          <div>
+            <div class="cm-grid">
+              <div class="cm-cell cm-tn"><div class="cm-num">912</div><div class="cm-tag">True Negative</div></div>
+              <div class="cm-cell cm-fp"><div class="cm-num">68</div><div class="cm-tag">False Positive</div></div>
+              <div class="cm-cell cm-fn"><div class="cm-num">56</div><div class="cm-tag">False Negative</div></div>
+              <div class="cm-cell cm-tp"><div class="cm-num">964</div><div class="cm-tag">True Positive</div></div>
+            </div>
+            <div class="cm-xlabels"><span>Predicted: No Flood</span><span>Predicted: Flood</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted);">
+          <span>Rows: Actual No Flood / Actual Flood</span>
+        </div>
+        <p class="cm-caption">XGBoost achieved 964 correct flood detections with only 56 missed events (2.8% miss rate).</p>
+      </section>
+
+      <section class="card card-pad">
+        <h2>ROC Curve</h2>
+        <p class="csub">True positive rate vs. false positive rate across all models</p>
+        <div class="roc-box"><canvas id="rocChart"></canvas></div>
+      </section>
+    </div>
+
+    <!-- FEATURE IMPORTANCE + DATASET -->
+    <div class="row-2" style="grid-template-columns: 1.3fr 1fr;">
+      <section class="card card-pad">
+        <h2>Feature Importance — Top 10</h2>
+        <p class="csub">Relative contribution of each feature to the XGBoost model</p>
+        <div class="fi-row"><span class="fi-name">Rainfall (mm)</span><div class="fi-track"><div class="fi-fill" style="width:100%;"></div></div><span class="fi-val">0.187</span></div>
+        <div class="fi-row"><span class="fi-name">River Discharge</span><div class="fi-track"><div class="fi-fill" style="width:83%;"></div></div><span class="fi-val">0.156</span></div>
+        <div class="fi-row"><span class="fi-name">Water Level</span><div class="fi-track"><div class="fi-fill" style="width:76%;"></div></div><span class="fi-val">0.142</span></div>
+        <div class="fi-row"><span class="fi-name">Elevation</span><div class="fi-track"><div class="fi-fill" style="width:63%;"></div></div><span class="fi-val">0.118</span></div>
+        <div class="fi-row"><span class="fi-name">Humidity</span><div class="fi-track"><div class="fi-fill" style="width:50%;"></div></div><span class="fi-val">0.094</span></div>
+        <div class="fi-row"><span class="fi-name">Population Density</span><div class="fi-track"><div class="fi-fill" style="width:36%;"></div></div><span class="fi-val">0.068</span></div>
+        <div class="fi-row"><span class="fi-name">Temperature</span><div class="fi-track"><div class="fi-fill" style="width:29%;"></div></div><span class="fi-val">0.055</span></div>
+        <div class="fi-row"><span class="fi-name">Historical Floods</span><div class="fi-track"><div class="fi-fill" style="width:26%;"></div></div><span class="fi-val">0.048</span></div>
+        <div class="fi-row"><span class="fi-name">Infrastructure</span><div class="fi-track"><div class="fi-fill" style="width:19%;"></div></div><span class="fi-val">0.035</span></div>
+        <div class="fi-row" style="margin-bottom:0;"><span class="fi-name">Land Cover: Water</span><div class="fi-track"><div class="fi-fill" style="width:15%;"></div></div><span class="fi-val">0.028</span></div>
+        <p class="fi-caption">Rainfall, River Discharge, and Water Level account for 48.5% of total feature importance.</p>
+      </section>
+
+      <section class="card card-pad">
+        <h2>Dataset Overview</h2>
+        <p class="csub">Composition of the flood risk training data</p>
+        <div class="ds-top">
+          <div class="ds-donut">
+            <canvas id="dsDonut"></canvas>
+            <div class="dc"><div class="dn">10,000</div><div class="dl">samples</div></div>
+          </div>
+          <div class="ds-legend">
+            <div class="ds-leg-row"><span class="ld" style="background:#0d9488;"></span> Flood Events <span class="lp"><strong>5,100</strong> · 51%</span></div>
+            <div class="ds-leg-row"><span class="ld" style="background:#d6cfbf;"></span> Non-Flood <span class="lp"><strong>4,900</strong> · 49%</span></div>
+          </div>
+        </div>
+        <div class="ds-stats">
+          <div class="ds-stat-row"><span class="k">Train / Test Split</span><span class="v">80% / 20% (Stratified)</span></div>
+          <div class="ds-stat-row"><span class="k">Features Used</span><span class="v">12 (coords excluded)</span></div>
+          <div class="ds-stat-row"><span class="k">Cross-Validation</span><span class="v">5-Fold</span></div>
+          <div class="ds-stat-row"><span class="k">Mean CV Accuracy</span><span class="v">93.0% ± 0.2%</span></div>
+        </div>
+        <p class="ds-note">Balanced classes ensure the model is not biased toward either outcome.</p>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  Chart.defaults.font.family = 'Inter, sans-serif';
+  Chart.defaults.color = '#5c6b62';
+
+  // ===== Model comparison grouped bar =====
+  const metrics = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC-AUC'];
+  const muted = ['#cfc7b4', '#b9d9d3', '#9ccabf', '#d8d0bd', '#c3ddd6'];
+  new Chart(document.getElementById('cmpChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Logistic Regression', 'Random Forest', 'XGBoost', 'Gradient Boosting', 'SVM'],
+      datasets: [
+        { label: 'Accuracy',  data: [0.847, 0.911, 0.932, 0.918, 0.873] },
+        { label: 'Precision', data: [0.851, 0.908, 0.921, 0.914, 0.869] },
+        { label: 'Recall',    data: [0.838, 0.919, 0.945, 0.926, 0.881] },
+        { label: 'F1-Score',  data: [0.844, 0.913, 0.933, 0.920, 0.875] },
+        { label: 'ROC-AUC',   data: [0.910, 0.962, 0.974, 0.967, 0.931] },
+      ].map((d, i) => ({
+        ...d,
+        backgroundColor: ctx => ctx.dataIndex === 2
+          ? ['#0f766e','#0d9488','#14b8a6','#2dd4bf','#5eead4'][i]
+          : muted[i],
+        borderRadius: 4,
+        borderSkipped: false,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { min: 0.8, max: 1.0, grid: { color: '#f1ece1' }, ticks: { stepSize: 0.05 } },
+        x: { grid: { display: false }, ticks: { font: { size: 11.5 } } }
+      },
+      plugins: {
+        legend: { position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 12, padding: 14, font: { size: 11.5 } } },
+        tooltip: { backgroundColor: '#1a3a2a', padding: 10, cornerRadius: 8 }
+      }
+    }
+  });
+
+  // ===== ROC curves =====
+  const rocPoint = (auc) => {
+    const pts = []; const k = (auc - 0.5) * 8 + 1;
+    for (let x = 0; x <= 1.001; x += 0.04) {
+      const y = Math.pow(x, 1 / (k + 0.0001));
+      pts.push({ x, y });
+    }
+    return pts;
+  };
+  new Chart(document.getElementById('rocChart'), {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: 'XGBoost (0.974)', data: rocPoint(0.974), borderColor: '#14b8a6', borderWidth: 3, pointRadius: 0, tension: 0.3 },
+        { label: 'Gradient Boost (0.967)', data: rocPoint(0.967), borderColor: '#0d9488', borderWidth: 1.6, pointRadius: 0, tension: 0.3 },
+        { label: 'Random Forest (0.962)', data: rocPoint(0.962), borderColor: '#65a30d', borderWidth: 1.6, pointRadius: 0, tension: 0.3 },
+        { label: 'SVM (0.931)', data: rocPoint(0.931), borderColor: '#d97706', borderWidth: 1.6, pointRadius: 0, tension: 0.3 },
+        { label: 'Logistic Reg. (0.910)', data: rocPoint(0.910), borderColor: '#9aa69e', borderWidth: 1.6, pointRadius: 0, tension: 0.3 },
+        { label: 'Random (0.500)', data: [{x:0,y:0},{x:1,y:1}], borderColor: '#c9c2b2', borderWidth: 1.5, borderDash: [6,5], pointRadius: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { type: 'linear', min: 0, max: 1, title: { display: true, text: 'False Positive Rate', font: { size: 11.5 } }, grid: { color: '#f1ece1' } },
+        y: { min: 0, max: 1, title: { display: true, text: 'True Positive Rate', font: { size: 11.5 } }, grid: { color: '#f1ece1' } }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 18, padding: 9, font: { size: 10.5 } } },
+        tooltip: { enabled: false }
+      }
+    }
+  });
+
+  // ===== Dataset donut =====
+  new Chart(document.getElementById('dsDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Flood Events', 'Non-Flood'],
+      datasets: [{ data: [5100, 4900], backgroundColor: ['#0d9488', '#d6cfbf'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
+</script>
+</body>
+</html>

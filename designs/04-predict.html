@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predict — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --risk-low: #16a34a;
+    --risk-mod: #d97706;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 6px 24px rgba(26, 58, 42, 0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+  /* ============ SIDEBAR (shared shell) ============ */
+  .sidebar {
+    background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 26px 16px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 19px; color: #fff;
+    text-decoration: none; padding: 0 10px; margin-bottom: 34px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 10px; display: grid; place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4); flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .nav-section { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.66); text-decoration: none;
+    font-size: 14.5px; font-weight: 500;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .nav-item svg { width: 19px; height: 19px; stroke-width: 1.8; flex-shrink: 0; }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+  .nav-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(255, 255, 255, 0.38);
+    padding: 0 14px; margin-bottom: 8px;
+  }
+  .sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 18px 10px; }
+  .spacer { flex: 1; }
+  .user-card {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 10px; border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .avatar {
+    position: relative; width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid; place-items: center;
+    font-size: 13.5px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .avatar::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #22c55e; border: 2px solid var(--forest-deep);
+  }
+  .user-meta { min-width: 0; }
+  .user-meta .name { font-size: 13.5px; font-weight: 600; }
+  .user-meta .email {
+    font-size: 11.5px; color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ============ MAIN ============ */
+  .main { padding: 30px 36px 44px; min-width: 0; }
+  .crumbs { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .crumbs a { color: var(--muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--teal); }
+  .crumbs .sep-c { margin: 0 7px; color: #b3bcb5; }
+  .crumbs .here { color: var(--teal); font-weight: 600; }
+  .page-head h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px; font-weight: 700; color: var(--forest);
+    letter-spacing: -0.01em; margin-bottom: 6px;
+  }
+  .page-head p { font-size: 14.5px; color: var(--muted); max-width: 640px; margin-bottom: 28px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .card {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
+    padding: 26px 28px;
+  }
+  .card > h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 20px; font-weight: 700; color: var(--forest);
+    margin-bottom: 4px;
+  }
+  .card > .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+
+  .group-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--teal);
+    margin: 26px 0 16px;
+  }
+  .group-label:first-of-type { margin-top: 0; }
+  .group-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  .field { margin-bottom: 20px; }
+  .field-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .field-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px; font-weight: 600; color: var(--ink);
+  }
+  .field-label .f-icon { width: 17px; height: 17px; color: var(--teal); stroke-width: 1.8; }
+  .info {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 1.2px solid #b3bcb5; color: #9aa69e;
+    display: inline-grid; place-items: center;
+    font-size: 9.5px; font-weight: 700; font-style: normal;
+    cursor: help;
+  }
+  .field-value {
+    font-size: 13px; font-weight: 700; color: var(--forest);
+    background: rgba(13, 148, 136, 0.09);
+    padding: 3px 12px; border-radius: var(--radius-pill);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* sliders */
+  .slider { position: relative; height: 22px; display: flex; align-items: center; }
+  .slider .track {
+    width: 100%; height: 6px; border-radius: 4px;
+    background: linear-gradient(90deg, #16a34a 0%, #eab308 55%, #dc2626 100%);
+    position: relative;
+  }
+  .slider .dim {
+    position: absolute; top: 0; bottom: 0; right: 0;
+    background: #e9e4d8; border-radius: 0 4px 4px 0;
+  }
+  .slider .thumb {
+    position: absolute; top: 50%;
+    width: 20px; height: 20px;
+    transform: translate(-50%, -50%);
+    background: #fff; border: 3px solid var(--teal); border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(26, 58, 42, 0.25);
+  }
+  .slider .range-ends {
+    position: absolute; top: 20px; left: 0; right: 0;
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #9aa69e;
+  }
+  .field.has-slider { margin-bottom: 32px; }
+
+  /* inputs & selects */
+  .text-input, .select {
+    width: 100%; height: 48px;
+    padding: 0 16px;
+    font-family: 'Inter', sans-serif; font-size: 14.5px; color: var(--ink);
+    background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(26, 58, 42, 0.04);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .select { cursor: pointer; }
+  .select .opt { display: flex; align-items: center; gap: 9px; }
+  .select .swatch { width: 9px; height: 9px; border-radius: 50%; }
+  .select svg { width: 16px; height: 16px; color: #9aa69e; }
+
+  /* toggles */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: #fbf9f4; border: 1px solid var(--line); border-radius: var(--radius-md);
+    margin-bottom: 14px;
+  }
+  .toggle-meta { display: flex; align-items: center; gap: 11px; }
+  .toggle-meta .f-icon { width: 18px; height: 18px; color: var(--teal); stroke-width: 1.8; }
+  .toggle-meta .t-name { font-size: 14px; font-weight: 600; }
+  .toggle-meta .t-state { font-size: 12px; color: var(--muted); }
+  .switch { width: 46px; height: 26px; border-radius: 100px; position: relative; flex-shrink: 0; }
+  .switch::after {
+    content: ''; position: absolute; top: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  .switch.on-green { background: var(--risk-low); }
+  .switch.on-amber { background: var(--risk-mod); }
+  .switch.on-green::after, .switch.on-amber::after { right: 3px; }
+
+  /* location */
+  #minimap {
+    height: 190px; border-radius: var(--radius-md);
+    border: 1.5px solid var(--line);
+    background: #18241e;
+    margin-bottom: 12px;
+  }
+  .geo-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 600; color: var(--teal); text-decoration: none;
+  }
+  .geo-link:hover { text-decoration: underline; }
+  .geo-link svg { width: 15px; height: 15px; stroke-width: 2; }
+  .map-hint { font-size: 12px; color: #9aa69e; margin: 6px 0 10px; }
+
+  /* analyze button */
+  .analyze-bar { margin-top: 24px; }
+  .btn-analyze {
+    width: 100%; height: 58px;
+    display: flex; align-items: center; justify-content: center; gap: 11px;
+    border: none; border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 16.5px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(13, 148, 136, 0.4);
+    position: relative;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-analyze:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(13, 148, 136, 0.5); }
+  .btn-analyze:active { transform: scale(0.99); }
+  .btn-analyze svg { width: 21px; height: 21px; stroke-width: 2.1; }
+  .pulse {
+    position: absolute; right: 22px;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #a7f3ec;
+    box-shadow: 0 0 0 5px rgba(167, 243, 236, 0.25);
+  }
+  .analyze-note { text-align: center; font-size: 12.5px; color: #9aa69e; margin-top: 12px; }
+
+  .leaflet-container { font-family: 'Inter', sans-serif; }
+  @media (max-width: 1080px) { .form-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <a href="#" class="logo" aria-label="SurgeShield home">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+          <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+        </svg>
+      </span>
+      SurgeShield
+    </a>
+
+    <nav class="nav-section" aria-label="Main">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+        Predict
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+        Map View
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/></svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        History
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>
+        About
+      </a>
+    </nav>
+
+    <div class="sep" role="presentation"></div>
+    <p class="nav-label">Account</p>
+    <nav class="nav-section" aria-label="Account">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+        Settings
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </a>
+    </nav>
+
+    <div class="spacer"></div>
+    <div class="user-card">
+      <div class="avatar" aria-hidden="true">GN</div>
+      <div class="user-meta">
+        <p class="name">Ghislain N.</p>
+        <p class="email">ghislain@surgeshield.app</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <p class="crumbs"><a href="#">Dashboard</a><span class="sep-c">›</span><span class="here">Predict</span></p>
+    <div class="page-head">
+      <h1>Flood Prediction Engine</h1>
+      <p>Enter environmental parameters below. Our XGBoost model will analyze the data and predict flood risk for your location.</p>
+    </div>
+
+    <div class="form-grid">
+
+      <!-- LEFT: Environmental Parameters -->
+      <section class="card">
+        <h2>Environmental Parameters</h2>
+        <p class="card-sub">Weather, hydrology and terrain conditions</p>
+
+        <p class="group-label">Weather &amp; Hydrology</p>
+
+        <div class="field has-slider">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5S6 10 6 14a6 6 0 0 0 12 0c0-4-6-10.5-6-10.5z"/></svg>
+              Rainfall (mm)
+              <i class="info" title="Total precipitation over the last 24 hours. Typical range: 0–500 mm.">i</i>
+            </span>
+            <span class="field-value">250 mm</span>
+          </div>
+          <div class="slider">
+            <div class="track"><div class="dim" style="width: 50%;"></div></div>
+            <div class="thumb" style="left: 50%;"></div>
+            <div class="range-ends"><span>0</span><span>500</span></div>
+          </div>
+        </div>
+
+        <div class="field has-slider">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5V5a2 2 0 1 1 4 0v8.5a4.5 4.5 0 1 1-4 0z"/><path d="M12 9v7"/></svg>
+              Temperature (°C)
+              <i class="info" title="Current air temperature. Typical range: 0–50 °C.">i</i>
+            </span>
+            <span class="field-value">32 °C</span>
+          </div>
+          <div class="slider">
+            <div class="track"><div class="dim" style="width: 36%;"></div></div>
+            <div class="thumb" style="left: 64%;"></div>
+            <div class="range-ends"><span>0</span><span>50</span></div>
+          </div>
+        </div>
+
+        <div class="field has-slider">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5S6 10 6 14a6 6 0 0 0 12 0c0-4-6-10.5-6-10.5z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg>
+              Humidity (%)
+              <i class="info" title="Atmospheric humidity. Typical range: 20–100%.">i</i>
+            </span>
+            <span class="field-value">78%</span>
+          </div>
+          <div class="slider">
+            <div class="track"><div class="dim" style="width: 27.5%;"></div></div>
+            <div class="thumb" style="left: 72.5%;"></div>
+            <div class="range-ends"><span>20</span><span>100</span></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0M3 12c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0M3 17c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/></svg>
+              River Discharge (m³/s)
+              <i class="info" title="Water flow rate in nearby rivers. Typical range: 0–10,000 m³/s.">i</i>
+            </span>
+          </div>
+          <div class="text-input">4,500</div>
+        </div>
+
+        <div class="field has-slider">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M12 4v8M9 9l3 3 3-3"/></svg>
+              Water Level (m)
+              <i class="info" title="Current water level relative to normal. Typical range: 0–15 m.">i</i>
+            </span>
+            <span class="field-value">8.2 m</span>
+          </div>
+          <div class="slider">
+            <div class="track"><div class="dim" style="width: 45%;"></div></div>
+            <div class="thumb" style="left: 55%;"></div>
+            <div class="range-ends"><span>0</span><span>15</span></div>
+          </div>
+        </div>
+
+        <p class="group-label">Terrain &amp; Geography</p>
+
+        <div class="field has-slider">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19h18M5.5 19L11 7l3 6.5L16.5 9l3.5 10"/></svg>
+              Elevation (m)
+              <i class="info" title="Terrain height above sea level. Range: 0–9,000 m.">i</i>
+            </span>
+            <span class="field-value">120 m</span>
+          </div>
+          <div class="slider">
+            <div class="track"
+                 style="background: linear-gradient(90deg, #dc2626 0%, #eab308 45%, #16a34a 100%);">
+              <div class="dim" style="width: 98.7%;"></div>
+            </div>
+            <div class="thumb" style="left: 1.3%;"></div>
+            <div class="range-ends"><span>0</span><span>9,000</span></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+              Land Cover
+              <i class="info" title="Dominant land use around the location.">i</i>
+            </span>
+          </div>
+          <div class="select">
+            <span class="opt"><span class="swatch" style="background:#ca8a04;"></span>Agricultural</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom: 4px;">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18c0-6 3.5-11 8-11s8 5 8 11"/><path d="M4 18h16M9 12.5c1 .8 2 .8 3 0s2-.8 3 0" stroke-width="1.5"/></svg>
+              Soil Type
+              <i class="info" title="Dominant soil composition — affects water absorption.">i</i>
+            </span>
+          </div>
+          <div class="select">
+            <span class="opt"><span class="swatch" style="background:#92614a;"></span>Clay</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Demographics & History -->
+      <section class="card">
+        <h2>Demographics &amp; History</h2>
+        <p class="card-sub">Population, infrastructure and flood history</p>
+
+        <p class="group-label">Population &amp; Infrastructure</p>
+
+        <div class="field">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.7-3 2.9-4.5 5.5-4.5s4.8 1.5 5.5 4.5"/><path d="M16 5a3 3 0 0 1 0 6M17.5 14.7c1.6.6 2.6 1.9 3 4.3"/></svg>
+              Population Density (per km²)
+              <i class="info" title="People per square kilometre in the surrounding area.">i</i>
+            </span>
+          </div>
+          <div class="text-input">5,200</div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-meta">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="16" height="12" rx="1.5"/><path d="M9 21v-5h6v5M4 9l8-6 8 6"/></svg>
+            <div>
+              <p class="t-name">Infrastructure Present</p>
+              <p class="t-state">Drainage, levees or flood defenses exist</p>
+            </div>
+          </div>
+          <span class="switch on-green" role="switch" aria-checked="true" aria-label="Infrastructure present: on"></span>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-meta">
+            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+            <div>
+              <p class="t-name">Historical Floods</p>
+              <p class="t-state">This area has flooded before</p>
+            </div>
+          </div>
+          <span class="switch on-amber" role="switch" aria-checked="true" aria-label="Historical floods: on"></span>
+        </div>
+
+        <p class="group-label">Location <span style="text-transform:none;letter-spacing:0;font-weight:500;color:#9aa69e;">(optional)</span></p>
+
+        <div class="field">
+          <div class="field-head">
+            <span class="field-label">
+              <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              Location Name
+            </span>
+          </div>
+          <div class="text-input">Bangkok, Thailand</div>
+        </div>
+
+        <div id="minimap" role="img" aria-label="Mini map for selecting coordinates, centered on Bangkok"></div>
+        <p class="map-hint">Click the map to set coordinates — currently 13.7563° N, 100.5018° E</p>
+        <a href="#" class="geo-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          Use my current location
+        </a>
+      </section>
+    </div>
+
+    <!-- ANALYZE -->
+    <div class="analyze-bar">
+      <button class="btn-analyze">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg>
+        Analyze Flood Risk
+        <span class="pulse" aria-hidden="true"></span>
+      </button>
+      <p class="analyze-note">Runs in ~150 ms against the deployed XGBoost model · 12 parameters analyzed</p>
+    </div>
+  </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('minimap', { zoomControl: false, attributionControl: false }).setView([13.7563, 100.5018], 9);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+  L.circleMarker([13.7563, 100.5018], {
+    radius: 9, color: '#fff', weight: 2, fillColor: '#14b8a6', fillOpacity: 0.95
+  }).addTo(map);
+</script>
+</body>
+</html>

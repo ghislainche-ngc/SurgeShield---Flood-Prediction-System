@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/*
+ * SurgeShield design tokens (Tailwind v4, CSS-first).
+ * Tokens defined in @theme generate utilities automatically, e.g.
+ *   --color-forest      -> bg-forest / text-forest / border-forest
+ *   --color-risk-high   -> bg-risk-high / text-risk-high
+ *   --font-heading      -> font-heading
+ */
+@theme {
+  /* Brand palette */
+  --color-forest: #1a3a2a;
+  --color-teal: #0d9488;
+  --color-cream: #faf7f2;
+  --color-charcoal: #1c1c1c;
+
+  /* Semantic surfaces */
+  --color-background: #faf7f2;
+  --color-foreground: #1c1c1c;
+
+  /* Risk levels */
+  --color-risk-low: #22c55e;
+  --color-risk-moderate: #f59e0b;
+  --color-risk-high: #ef4444;
+  --color-risk-critical: #7f1d1d;
+}
+
+/* Fonts are injected at runtime by next/font (set on <html>), so reference
+ * them via @theme inline to keep the utility pointing at the live variable. */
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-playfair);
+}
+
+/*
+ * Marketing/design tokens — the exact custom properties from the Fable HTML
+ * designs (landing + about). The CSS Modules for those pages reference these
+ * by name (var(--forest), var(--shadow-card), …), so the designs render
+ * byte-for-byte. Kept separate from the @theme palette above on purpose.
+ *
+ * Selector is html:root, NOT a bare :root, on purpose: Tailwind v4 merges any
+ * plain :root{} into its own generated :root,:host{} theme block and drops the
+ * custom properties it doesn't recognize as theme tokens. Using a compound
+ * selector escapes that merge so these survive the build, and its higher
+ * specificity (0,1,1) lets --radius-md/--radius-lg win over Tailwind's own
+ * :root defaults of the same name.
+ */
+html:root {
+  --forest: #1a3a2a;
+  --forest-deep: #122b1f;
+  --teal: #0d9488;
+  --teal-bright: #14b8a6;
+  --cream: #faf7f2;
+  --charcoal: #1c1c1c;
+  --ink: #233129;
+  --muted: #5c6b62;
+  --line: #e6e0d4;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-pill: 100px;
+  --shadow-soft: 0 8px 30px rgba(26, 58, 42, 0.08);
+  --shadow-card: 0 12px 40px rgba(26, 58, 42, 0.1);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
