@@ -1,0 +1,19 @@
+[Unit]
+Description=SurgeShield Next.js frontend (next start)
+After=network.target
+
+[Service]
+Type=simple
+User=surgeshield
+Group=surgeshield
+WorkingDirectory=/opt/surgeshield/frontend
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# Next reads .env.local from WorkingDirectory; it must exist at build time too
+# (NEXT_PUBLIC_* are inlined during `npm run build`).
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

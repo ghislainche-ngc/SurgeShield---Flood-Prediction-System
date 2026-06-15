@@ -1,0 +1,14 @@
+# Slim runtime deps for SERVING the API (gunicorn). The best model is Logistic
+# Regression, so we don't need xgboost/shap/matplotlib/seaborn/jupyter here —
+# those are only for the training pipeline (see requirements.txt).
+#
+# scikit-learn is pinned to the version the artifacts were pickled with, to
+# silence InconsistentVersionWarning and guarantee identical preprocessing.
+flask
+flask-cors
+gunicorn
+requests
+numpy
+pandas
+scikit-learn==1.5.2
+joblib

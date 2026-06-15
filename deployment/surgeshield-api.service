@@ -1,0 +1,21 @@
+[Unit]
+Description=SurgeShield Flask ML API (gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=surgeshield
+Group=surgeshield
+WorkingDirectory=/opt/surgeshield/ml-api
+# gunicorn + the app both resolve artifact paths via __file__, so cwd is safe.
+ExecStart=/opt/surgeshield/ml-api/venv/bin/gunicorn app:app \
+    --bind 127.0.0.1:5000 \
+    --workers 2 \
+    --timeout 60 \
+    --access-logfile - \
+    --error-logfile -
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
