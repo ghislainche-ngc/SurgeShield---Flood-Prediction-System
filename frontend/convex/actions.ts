@@ -92,6 +92,74 @@ export const predict = action({
   },
 });
 
+type MetricSet = {
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  roc_auc: number;
+};
+
+export type AnalyticsResponse = {
+  metrics: {
+    best_model: string;
+    metrics: MetricSet;
+    n_test: number;
+    feature_count: number;
+    feature_count_encoded?: number;
+    dataset: string;
+    generated_at: string;
+    interpretation: string;
+  };
+  model_comparison: {
+    best_model: string;
+    models: Record<
+      string,
+      { cv: Record<string, { mean: number; std: number }>; test: MetricSet }
+    >;
+    class_balance_train: Record<string, number>;
+    n_train: number;
+    n_test: number;
+    encoded_feature_names?: string[];
+    protocol?: string;
+  };
+  confusion_matrix: {
+    matrix: number[][];
+    tn: number;
+    fp: number;
+    fn: number;
+    tp: number;
+    labels: string[];
+    model: string;
+  };
+  feature_importances: {
+    importances: { feature: string; importance: number; signed: number }[];
+    type: string;
+    model: string;
+  };
+  roc_data: {
+    chance_auc: number;
+    models: Record<string, { auc: number; fpr: number[]; tpr: number[] }>;
+  };
+};
+
+/**
+ * Real model analytics for the /analytics page — proxies Flask /analytics
+ * (which reads ml-api/5_interpretation/*.json). No auth required: it returns
+ * model metadata only (no user data), and the page is route-protected. These
+ * are honest chance-level numbers (ROC-AUC ≈ 0.50), never hard-coded in the UI.
+ */
+export const getAnalytics = action({
+  args: {},
+  handler: async (): Promise<AnalyticsResponse> => {
+    const res = await fetch(`${apiBase()}/analytics`);
+    if (!res.ok) {
+      throw new Error(`Analytics fetch failed (${res.status}): ${await res.text()}`);
+    }
+    return (await res.json()) as AnalyticsResponse;
+  },
+});
+
 /** Live weather for a location (Flask /weather → Open-Meteo): rainfall/temp/humidity. */
 export const weather = action({
   args: { latitude: v.number(), longitude: v.number() },
