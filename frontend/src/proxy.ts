@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher([
   "/", // landing
   "/about(.*)", // about / how it works
+  "/contact(.*)", // contact form
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sso-callback(.*)", // OAuth return — must finalize before auth gating

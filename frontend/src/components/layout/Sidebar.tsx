@@ -5,9 +5,15 @@ import { usePathname } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import styles from "./appShell.module.css";
 
-// Main navigation. Routes that don't exist yet (predict/map/analytics/history)
-// will 404 until those pages are built — that's expected for now.
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  tag?: string;
+};
+
+// Main navigation. The Admin item is spliced in below for admin users only.
+const NAV: NavItem[] = [
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -70,6 +76,20 @@ const NAV = [
   },
 ];
 
+// Admin-only nav item, shown between History and About when the signed-in
+// user's public_metadata.role is "admin".
+const ADMIN_ITEM: NavItem = {
+  href: "/admin",
+  label: "Admin",
+  tag: "ADMIN",
+  icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z" />
+      <path d="M9.5 12l1.8 1.8 3.5-3.6" />
+    </svg>
+  ),
+};
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "U";
@@ -90,6 +110,11 @@ export default function Sidebar() {
     "User";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
 
+  const isAdmin = user?.publicMetadata?.role === "admin";
+  const navItems = isAdmin
+    ? [...NAV.slice(0, 5), ADMIN_ITEM, ...NAV.slice(5)]
+    : NAV;
+
   return (
     <aside className={styles.sidebar}>
       <Link href="/dashboard" className={styles.logo} aria-label="SurgeShield home">
@@ -103,7 +128,7 @@ export default function Sidebar() {
       </Link>
 
       <nav className={styles["nav-section"]} aria-label="Main">
-        {NAV.map((item) => {
+        {navItems.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
@@ -115,6 +140,7 @@ export default function Sidebar() {
             >
               {item.icon}
               {item.label}
+              {item.tag && <span className={styles["nav-tag"]}>{item.tag}</span>}
             </Link>
           );
         })}

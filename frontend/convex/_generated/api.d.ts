@@ -10,6 +10,7 @@
 
 import type * as actions from "../actions.js";
 import type * as admin from "../admin.js";
+import type * as contact from "../contact.js";
 import type * as helpers from "../helpers.js";
 import type * as locations from "../locations.js";
 import type * as predictions from "../predictions.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
   admin: typeof admin;
+  contact: typeof contact;
   helpers: typeof helpers;
   locations: typeof locations;
   predictions: typeof predictions;

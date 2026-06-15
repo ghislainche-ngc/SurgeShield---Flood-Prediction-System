@@ -2,7 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { predictionInputs, riskLevel, topFactors, weatherSource } from "./schema";
-import { requireUser, requireAdmin } from "./helpers";
+import { requireUser, requireAdmin, touchUser } from "./helpers";
 
 /** Persist a completed prediction for the signed-in user. */
 export const savePrediction = mutation({
@@ -21,7 +21,8 @@ export const savePrediction = mutation({
   // Explicit return type breaks the circular inference when the predict
   // action calls this via ctx.runMutation (api references this file).
   handler: async (ctx, args): Promise<Id<"predictions">> => {
-    const userId = await requireUser(ctx);
+    // touchUser records the user in the directory and returns their id.
+    const userId = await touchUser(ctx);
     return await ctx.db.insert("predictions", {
       ...args,
       userId,

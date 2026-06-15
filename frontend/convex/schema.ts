@@ -55,6 +55,18 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_createdAt", ["createdAt"]),
 
+  // Lightweight user directory, upserted whenever someone saves a prediction.
+  // Clerk is the source of truth for auth; this just lets the admin overview
+  // show real names/roles/activity without calling the Clerk backend API.
+  users: defineTable({
+    userId: v.string(), // Clerk identity.subject
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    role: v.optional(v.string()), // "admin" | "user" (from public_metadata)
+    firstSeen: v.number(),
+    lastActiveAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
   savedLocations: defineTable({
     userId: v.string(),
     name: v.string(),
@@ -63,6 +75,18 @@ export default defineSchema({
     lastRiskLevel: riskLevel,
     lastChecked: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Public contact-form submissions (no auth required to insert). Surfaced to
+  // admins later; for now they're simply persisted so the form genuinely works.
+  contactMessages: defineTable({
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    organization: v.optional(v.string()),
+    topic: v.string(),
+    message: v.string(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
 
   systemStats: defineTable({
     totalPredictions: v.number(),

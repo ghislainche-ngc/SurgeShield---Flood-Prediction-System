@@ -99,6 +99,20 @@
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
 }
+.nav-tag {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(20, 184, 166, 0.25);
+  color: var(--teal-bright);
+  padding: 2px 7px;
+  border-radius: 100px;
+}
+.nav-item.active .nav-tag {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
 .nav-label {
   font-size: 11px;
   font-weight: 600;

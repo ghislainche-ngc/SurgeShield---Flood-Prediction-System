@@ -83,7 +83,7 @@ export default function StatCards() {
         </div>
         {/* placeholder — real accuracy comes from metrics.json */}
         <p className={styles["stat-num"]}>{ACCURACY}</p>
-        <p className={`${styles["stat-delta"]} ${styles.neutral}`}>XGBoost model</p>
+        <p className={`${styles["stat-delta"]} ${styles.neutral}`}>Logistic Regression</p>
       </div>
     </section>
   );
