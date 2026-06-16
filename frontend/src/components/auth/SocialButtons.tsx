@@ -24,11 +24,22 @@ export default function SocialButtons({
   const { signUp } = useSignUp();
   const [pending, setPending] = useState<Provider | null>(null);
 
+  // Where to land once the OAuth session is created. Must be a real app page —
+  // pointing this at /sso-callback (the handler) leaves Clerk with no onward
+  // destination, so it falls back to the hosted Account Portal.
+  const afterAuth =
+    (mode === "sign-in"
+      ? process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+      : process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL) ??
+    "/dashboard";
+
   async function authenticate(strategy: Provider) {
     setPending(strategy);
     const opts = {
       strategy,
-      redirectUrl: "/sso-callback",
+      // Final destination after the SSO flow completes.
+      redirectUrl: afterAuth,
+      // Intermediate handler for OAuth return / sign-ups needing more info.
       redirectCallbackUrl: "/sso-callback",
     };
     try {
