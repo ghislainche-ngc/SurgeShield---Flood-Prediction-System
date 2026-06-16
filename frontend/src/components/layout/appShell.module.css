@@ -18,7 +18,11 @@
 
   display: grid;
   grid-template-columns: 250px 1fr;
-  min-height: 100vh;
+  /* Lock the shell to the viewport; the main area is the only scroll container.
+     dvh avoids the mobile-browser-chrome clipping that plain vh causes. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* ============ SIDEBAR ============ */
@@ -28,9 +32,9 @@
   display: flex;
   flex-direction: column;
   padding: 26px 16px 20px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  height: 100%;
+  overflow-y: auto;
+  z-index: 1000;
 }
 .logo {
   display: flex;
@@ -178,10 +182,72 @@
   text-overflow: ellipsis;
 }
 
-/* ============ MAIN / TOPBAR ============ */
-.main {
-  padding: 30px 36px 40px;
+/* ============ CONTENT COLUMN / MAIN / TOPBAR ============ */
+/* Second grid column: stacks the (mobile-only) top bar above the scrollable
+   main area. Fills the locked shell height so .main can own the scroll. */
+.contentCol {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 30px 36px 40px;
+}
+
+/* ---- mobile top bar + drawer chrome (hidden on desktop) ---- */
+.mobileBar {
+  display: none;
+}
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.menuBtn svg {
+  width: 22px;
+  height: 22px;
+}
+.mobileLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 17px;
+  color: #fff;
+  text-decoration: none;
+}
+.mobile-logo-mark {
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.mobile-logo-mark svg {
+  width: 17px;
+  height: 17px;
+}
+.backdrop {
+  display: none;
+}
+.drawer-close {
+  display: none;
 }
 .topbar {
   display: flex;
@@ -268,11 +334,70 @@
   .app {
     grid-template-columns: 1fr;
   }
+  /* Sidebar becomes an off-canvas drawer that slides in over a backdrop. */
   .sidebar {
-    position: static;
-    height: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 264px;
+    max-width: 84vw;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 44px rgba(0, 0, 0, 0.45);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  .drawer-close {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 22px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+  }
+  .drawer-close svg {
+    width: 18px;
+    height: 18px;
+  }
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+    background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
   }
   .main {
-    padding: 22px 20px 32px;
+    padding: 20px 16px 28px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: 16px 14px 24px;
+  }
+  .topbar {
+    margin-bottom: 20px;
+  }
+  .topbar h1 {
+    font-size: 23px;
+  }
+  .greeting {
+    display: none;
   }
 }

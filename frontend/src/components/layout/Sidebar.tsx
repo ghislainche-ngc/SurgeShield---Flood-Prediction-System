@@ -97,7 +97,13 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export default function Sidebar() {
+export default function Sidebar({
+  open = false,
+  onClose,
+}: {
+  open?: boolean;
+  onClose?: () => void;
+} = {}) {
   const pathname = usePathname();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -116,7 +122,7 @@ export default function Sidebar() {
     : NAV;
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${open ? styles.open : ""}`}>
       <Link href="/dashboard" className={styles.logo} aria-label="SurgeShield home">
         <span className={styles["logo-mark"]}>
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -126,6 +132,16 @@ export default function Sidebar() {
         </span>
         SurgeShield
       </Link>
+      <button
+        type="button"
+        className={styles["drawer-close"]}
+        onClick={onClose}
+        aria-label="Close navigation menu"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
 
       <nav className={styles["nav-section"]} aria-label="Main">
         {navItems.map((item) => {

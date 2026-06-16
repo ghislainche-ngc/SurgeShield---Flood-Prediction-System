@@ -89,3 +89,16 @@
     flex-direction: column;
   }
 }
+@media (max-width: 600px) {
+  .container {
+    padding: 0 20px;
+  }
+  .footer-cols {
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .footer-bottom {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

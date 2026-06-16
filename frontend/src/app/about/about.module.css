@@ -449,3 +449,11 @@
     display: none;
   }
 }
+@media (max-width: 560px) {
+  .container {
+    padding: 0 20px;
+  }
+  .tech-grid {
+    grid-template-columns: 1fr;
+  }
+}
