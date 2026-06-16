@@ -12,13 +12,58 @@ point at the API host. We use **sslip.io** because you have an IP but no domain:
 `<IP>.sslip.io` is a real hostname that resolves to your IP, so Let's Encrypt can
 issue a certificate (a bare IP cannot get one, and Convex actions must call HTTPS).
 
-> Replace `<IP>` everywhere with your VPS IPv4. Run as a sudo-capable user.
+> Replace `<IP>` everywhere with your VPS IPv4. A fresh Contabo VPS only gives
+> you `root` — **Step 0 creates a non-root sudo user and every later step runs
+> as that user** (not root). The app itself runs under a separate unprivileged
+> `surgeshield` service account (Step 3).
 > If you later buy a domain, point it at the IP and re-run the certbot step with
 > the real hostnames instead of the sslip.io ones.
 
 ---
 
-## 0. Set the hostnames (do this once per shell)
+## 0. Create a non-root admin user + harden SSH (as root, once)
+
+Don't deploy as root. Create a sudo-capable login user, give it your SSH key,
+verify it works, then disable root/password logins. Do this **once**, while
+still logged in as `root`.
+
+```bash
+# --- as root, on the VPS ---
+adduser deploy                       # set a strong password when prompted
+usermod -aG sudo deploy              # grant sudo
+
+# Give the new user your SSH key so you can log in without a password:
+install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+# Reuse the key you already use for root, if any:
+cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys 2>/dev/null || true
+# ...or paste your PUBLIC key into the file instead:
+#   nano /home/deploy/.ssh/authorized_keys
+chown deploy:deploy /home/deploy/.ssh/authorized_keys
+chmod 600 /home/deploy/.ssh/authorized_keys
+```
+
+Open a **new terminal** and confirm the new login works **before** locking root
+out:
+
+```bash
+ssh deploy@<IP>        # from your local machine
+sudo whoami            # must print: root
+```
+
+Once that works, harden SSH:
+
+```bash
+# --- as deploy, via sudo ---
+sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/'        /etc/ssh/sshd_config
+sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+sudo systemctl restart ssh
+```
+
+> Keep `PasswordAuthentication yes` if you log in with a password rather than a
+> key — but key-only is strongly recommended. From here on, **every step runs as
+> `deploy`** and uses `sudo` where root is needed.
+
+## 1. Set the hostnames (do this once per shell)
 
 ```bash
 IP=203.0.113.5                       # <-- your VPS IPv4
@@ -27,7 +72,7 @@ API_HOST=api.${IP}.sslip.io
 echo "frontend=$FRONTEND_HOST  api=$API_HOST"
 ```
 
-## 1. System packages
+## 2. System packages
 
 ```bash
 sudo apt update && sudo apt -y upgrade
@@ -39,7 +84,7 @@ sudo apt -y install nodejs
 node -v && npm -v
 ```
 
-## 2. App user + clone
+## 3. App user + clone
 
 ```bash
 sudo useradd --system --create-home --shell /bin/bash surgeshield || true
@@ -48,7 +93,7 @@ sudo -u surgeshield git clone \
   https://github.com/ghislainche-ngc/SurgeShield---Flood-Prediction-System.git /opt/surgeshield
 ```
 
-## 3. Flask ML API (venv + slim deps)
+## 4. Flask ML API (venv + slim deps)
 
 ```bash
 cd /opt/surgeshield/ml-api
@@ -60,7 +105,7 @@ sudo -u surgeshield ./venv/bin/gunicorn app:app --bind 127.0.0.1:5000 &
 sleep 3 && curl -s localhost:5000/health && kill %1
 ```
 
-## 4. Frontend env + build
+## 5. Frontend env + build
 
 Create `/opt/surgeshield/frontend/.env.local` with the **same values you use
 locally** (copy from your machine's `frontend/.env.local`). Required keys:
@@ -83,7 +128,7 @@ sudo -u surgeshield npm ci
 sudo -u surgeshield npm run build      # needs the env above + internet (fonts)
 ```
 
-## 5. systemd services
+## 6. systemd services
 
 ```bash
 sudo cp /opt/surgeshield/deployment/surgeshield-api.service /etc/systemd/system/
@@ -95,7 +140,7 @@ curl -s localhost:5000/health && curl -sI localhost:3000 | head -1
 sudo systemctl --no-pager status surgeshield-api surgeshield-web | head -20
 ```
 
-## 6. Nginx reverse proxy
+## 7. Nginx reverse proxy
 
 ```bash
 sudo cp /opt/surgeshield/deployment/nginx-surgeshield.conf /etc/nginx/sites-available/surgeshield.conf
@@ -106,7 +151,7 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## 7. Firewall
+## 8. Firewall
 
 ```bash
 sudo ufw allow OpenSSH
@@ -116,7 +161,7 @@ sudo ufw --force enable
 > Contabo also has an optional **Cloud Firewall** in its web panel — if enabled
 > there, allow inbound 22/80/443 as well.
 
-## 8. HTTPS (Let's Encrypt via sslip.io)
+## 9. HTTPS (Let's Encrypt via sslip.io)
 
 ```bash
 sudo certbot --nginx -d "$FRONTEND_HOST" -d "$API_HOST" \
@@ -126,7 +171,7 @@ sudo certbot --nginx -d "$FRONTEND_HOST" -d "$API_HOST" \
 curl -s "https://$API_HOST/health"
 ```
 
-## 9. Point Convex at the API
+## 10. Point Convex at the API
 
 From your **local machine** (or the VPS) in `frontend/`:
 
@@ -135,7 +180,7 @@ npx convex env set ML_API_URL "https://api.<IP>.sslip.io"
 ```
 This replaces the throwaway tunnel. Predict / weather / analytics now hit the VPS.
 
-## 10. Clerk (allow the new origin)
+## 11. Clerk (allow the new origin)
 
 In the Clerk Dashboard, add `https://<IP>.sslip.io` to the instance's allowed
 origins / paths. The current keys are a **development** instance, which is fine
@@ -143,7 +188,7 @@ for a demo. For a polished production deploy, create a **production** instance
 (`pk_live`/`sk_live`), set its domain, redo the Convex JWT template, and swap the
 keys in `.env.local` + the Convex `auth.config.ts` issuer.
 
-## 11. Verify end-to-end
+## 12. Verify end-to-end
 
 - `https://<IP>.sslip.io` loads the app (padlock = valid cert).
 - Sign in → **Predict** → Analyze: a real prediction saves and the dashboard,

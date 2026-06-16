@@ -45,6 +45,14 @@ yarn-error.log*
 
 # ─── Agent / local tooling ───────────────────────────────────────────
 .claude-flow/
+.claude/
+.playwright-mcp/
+
+# Stray local screenshots at repo root (Playwright captures, scratch images).
+# Design renders live under designs/ and are committed normally.
+/*.png
+/*.jpeg
+/*.jpg
 
 # ─── OS / editor ─────────────────────────────────────────────────────
 .DS_Store

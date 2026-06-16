@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — SurgeShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --forest-deep: #122b1f;
+    --teal: #0d9488;
+    --teal-bright: #14b8a6;
+    --cream: #faf7f2;
+    --charcoal: #1c1c1c;
+    --ink: #233129;
+    --muted: #5c6b62;
+    --line: #e6e0d4;
+    --risk-low: #16a34a;
+    --risk-mod: #d97706;
+    --risk-high: #dc2626;
+    --risk-crit: #7f1d1d;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --radius-pill: 100px;
+    --shadow-soft: 0 6px 24px rgba(26, 58, 42, 0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 26px 16px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 19px;
+    color: #fff;
+    text-decoration: none;
+    padding: 0 10px;
+    margin-bottom: 34px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .nav-section { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.66);
+    text-decoration: none;
+    font-size: 14.5px;
+    font-weight: 500;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .nav-item svg { width: 19px; height: 19px; stroke-width: 1.8; flex-shrink: 0; }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+  .nav-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    padding: 0 14px;
+    margin-bottom: 8px;
+  }
+  .sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 18px 10px; }
+  .spacer { flex: 1; }
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 10px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .avatar {
+    position: relative;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid;
+    place-items: center;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .avatar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2px solid var(--forest-deep);
+  }
+  .user-meta { min-width: 0; }
+  .user-meta .name { font-size: 13.5px; font-weight: 600; }
+  .user-meta .email {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ============ MAIN ============ */
+  .main { padding: 30px 36px 48px; min-width: 0; }
+  .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .topbar h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--forest);
+    letter-spacing: -0.01em;
+  }
+  .topbar .sub { font-size: 14.5px; color: var(--muted); margin-top: 3px; }
+  .bell {
+    position: relative;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    flex-shrink: 0;
+  }
+  .bell svg { width: 19px; height: 19px; }
+  .bell::after {
+    content: '';
+    position: absolute;
+    top: 10px; right: 11px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--risk-high);
+    border: 1.5px solid #fff;
+  }
+
+  /* ============ SETTINGS LAYOUT ============ */
+  /* single scrolling column of section cards */
+  .settings { max-width: 880px; }
+  .panels { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+  .card-head {
+    padding: 22px 26px 0;
+  }
+  .card-head h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 700; color: var(--forest); }
+  .card-head p { font-size: 13.5px; color: var(--muted); margin-top: 3px; }
+  .card-body { padding: 20px 26px 24px; }
+
+  /* form fields */
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 7px;
+  }
+  .input {
+    width: 100%;
+    height: 46px;
+    padding: 0 15px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--cream);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12); background: #fff; }
+  .input-lock {
+    position: relative;
+  }
+  .input-lock .input { color: var(--muted); padding-right: 42px; }
+  .input-lock svg {
+    position: absolute;
+    right: 15px; top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    color: var(--muted);
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* avatar editor row */
+  .avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+  .avatar-lg {
+    position: relative;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .avatar-lg::after {
+    content: '';
+    position: absolute;
+    bottom: 2px; right: 2px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2.5px solid #fff;
+  }
+  .avatar-row .info .place { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .avatar-row .info .sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+  /* badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .b-admin { background: rgba(13, 148, 136, 0.13); color: var(--teal); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: var(--radius-md);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: transform 0.16s ease, background 0.16s ease;
+  }
+  .btn svg { width: 16px; height: 16px; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(13, 148, 136, 0.32);
+  }
+  .btn-primary:hover { transform: translateY(-1.5px); }
+  .btn-ghost {
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .btn-ghost:hover { background: #f6f2ea; }
+  .btn-danger {
+    background: #fff;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    color: var(--risk-high);
+  }
+  .btn-danger:hover { background: rgba(220, 38, 38, 0.06); }
+  .card-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 26px;
+    border-top: 1px solid var(--line);
+  }
+
+  /* toggle rows */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .toggle-row:first-child { padding-top: 4px; }
+  .toggle-row:last-child { border-bottom: none; padding-bottom: 4px; }
+  .toggle-text .t-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .toggle-text .t-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .switch {
+    position: relative;
+    width: 46px; height: 26px;
+    border-radius: var(--radius-pill);
+    background: #d8d2c4;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+    transition: transform 0.2s ease;
+  }
+  .switch.on { background: linear-gradient(135deg, var(--teal) 0%, var(--teal-bright) 100%); }
+  .switch.on::after { transform: translateX(20px); }
+
+  /* segmented control */
+  .seg-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .seg-row:first-child { padding-top: 4px; }
+  .seg-row:last-child { border-bottom: none; padding-bottom: 4px; }
+  .seg-text .t-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .seg-text .t-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .segment {
+    display: inline-flex;
+    padding: 4px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    flex-shrink: 0;
+  }
+  .segment button {
+    border: none;
+    background: transparent;
+    padding: 7px 18px;
+    border-radius: var(--radius-pill);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+  }
+  .segment button.on {
+    background: #fff;
+    color: var(--forest);
+    box-shadow: 0 2px 8px rgba(26, 58, 42, 0.1);
+  }
+  .select {
+    height: 44px;
+    padding: 0 38px 0 15px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235c6b62' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .select:focus { outline: none; border-color: var(--teal); }
+
+  /* connected accounts / sessions */
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .list-row:first-child { padding-top: 4px; }
+  .list-row.last { border-bottom: none; padding-bottom: 4px; }
+  .list-ic {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .list-ic svg { width: 20px; height: 20px; }
+  .list-meta { flex: 1; min-width: 0; }
+  .list-meta .l-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .list-meta .l-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .tag-ok {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 600; color: var(--risk-low);
+  }
+  .tag-ok::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--risk-low); }
+  .link-btn {
+    background: none; border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--teal); cursor: pointer; text-decoration: none;
+  }
+  .link-btn:hover { text-decoration: underline; }
+  .btn-sm { height: 38px; padding: 0 16px; font-size: 13px; }
+
+  .subhead {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 22px 0 4px;
+  }
+
+  /* danger zone */
+  .danger {
+    margin-top: 22px;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: var(--radius-md);
+    background: rgba(220, 38, 38, 0.035);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .danger .d-title { font-size: 14px; font-weight: 700; color: var(--risk-high); }
+  .danger .d-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; max-width: 420px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <a href="#" class="logo" aria-label="SurgeShield home">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+          <path d="M8 11.5c1-.8 2-.8 3 0s2 .8 3 0 1.5-.6 2-.3" stroke-width="1.6"/>
+        </svg>
+      </span>
+      SurgeShield
+    </a>
+
+    <nav class="nav-section" aria-label="Main">
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+        Predict
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+        Map View
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M7 21V11M12 21V7M17 21v-8"/></svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        History
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>
+        About
+      </a>
+    </nav>
+
+    <div class="sep" role="presentation"></div>
+    <p class="nav-label">Account</p>
+    <nav class="nav-section" aria-label="Account">
+      <a href="#" class="nav-item active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+        Settings
+      </a>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </a>
+    </nav>
+
+    <div class="spacer"></div>
+    <div class="user-card">
+      <div class="avatar" aria-hidden="true">GN</div>
+      <div class="user-meta">
+        <p class="name">Ghislain N.</p>
+        <p class="email">ghislain@surgeshield.app</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Settings</h1>
+        <p class="sub">Manage your account, preferences, and data.</p>
+      </div>
+      <button class="bell" aria-label="Notifications, 1 unread">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg>
+      </button>
+    </div>
+
+    <div class="settings">
+
+      <!-- panels -->
+      <div class="panels">
+
+        <!-- PROFILE -->
+        <section class="card" id="profile">
+          <div class="card-head">
+            <h2>Profile &amp; Account</h2>
+            <p>Your public identity across SurgeShield.</p>
+          </div>
+          <div class="card-body">
+            <div class="avatar-row">
+              <div class="avatar-lg" aria-hidden="true">GN</div>
+              <div class="info">
+                <p class="place">Ghislain N.</p>
+                <p class="sub">JPG, PNG or GIF — max 2&nbsp;MB</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="margin-left:auto">Change avatar</button>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label for="name">Display name</label>
+                <input class="input" id="name" type="text" value="Ghislain N.">
+              </div>
+              <div class="field">
+                <label for="email">Email address</label>
+                <div class="input-lock">
+                  <input class="input" id="email" type="email" value="ghislain@surgeshield.app" readonly>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                </div>
+                <p class="hint">Managed by Clerk — change it from your account provider.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label>Role</label>
+              <span class="badge b-admin">Admin</span>
+            </div>
+          </div>
+          <div class="card-foot">
+            <button class="btn btn-ghost">Cancel</button>
+            <button class="btn btn-primary">Save changes</button>
+          </div>
+        </section>
+
+        <!-- NOTIFICATIONS -->
+        <section class="card" id="notifications">
+          <div class="card-head">
+            <h2>Notifications</h2>
+            <p>Choose what SurgeShield emails you about.</p>
+          </div>
+          <div class="card-body" style="padding-top:8px; padding-bottom:12px">
+            <div class="toggle-row">
+              <div class="toggle-text">
+                <p class="t-title">High &amp; Critical prediction alerts</p>
+                <p class="t-sub">Email me the moment a prediction lands in the High or Critical band.</p>
+              </div>
+              <span class="switch on" role="switch" aria-checked="true" aria-label="High and critical alerts"></span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-text">
+                <p class="t-title">Weekly risk summary</p>
+                <p class="t-sub">A Monday digest of your saved locations and their latest risk levels.</p>
+              </div>
+              <span class="switch on" role="switch" aria-checked="true" aria-label="Weekly summary"></span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-text">
+                <p class="t-title">Product &amp; model updates</p>
+                <p class="t-sub">News about new features and model retraining. No more than once a month.</p>
+              </div>
+              <span class="switch" role="switch" aria-checked="false" aria-label="Product updates"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- UNITS & DISPLAY -->
+        <section class="card" id="units">
+          <div class="card-head">
+            <h2>Units &amp; Display</h2>
+            <p>How measurements and the app are presented to you.</p>
+          </div>
+          <div class="card-body" style="padding-top:8px; padding-bottom:12px">
+            <div class="seg-row">
+              <div class="seg-text">
+                <p class="t-title">Measurement units</p>
+                <p class="t-sub">Affects rainfall, river discharge, elevation and water level.</p>
+              </div>
+              <div class="segment" role="group" aria-label="Measurement units">
+                <button class="on">Metric</button>
+                <button>Imperial</button>
+              </div>
+            </div>
+            <div class="seg-row">
+              <div class="seg-text">
+                <p class="t-title">Temperature</p>
+                <p class="t-sub">Unit used on prediction inputs and results.</p>
+              </div>
+              <div class="segment" role="group" aria-label="Temperature unit">
+                <button class="on">°C</button>
+                <button>°F</button>
+              </div>
+            </div>
+            <div class="seg-row">
+              <div class="seg-text">
+                <p class="t-title">Default map style</p>
+                <p class="t-sub">Basemap used on the Map View and dashboard mini-map.</p>
+              </div>
+              <div class="segment" role="group" aria-label="Map style">
+                <button class="on">Dark</button>
+                <button>Light</button>
+              </div>
+            </div>
+            <div class="seg-row">
+              <div class="seg-text">
+                <p class="t-title">Default landing page</p>
+                <p class="t-sub">Where you land right after signing in.</p>
+              </div>
+              <select class="select" aria-label="Default landing page">
+                <option>Dashboard</option>
+                <option>Predict</option>
+                <option>Map View</option>
+                <option>History</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECURITY & DATA -->
+        <section class="card" id="security">
+          <div class="card-head">
+            <h2>Security &amp; Data</h2>
+            <p>Connected accounts, sessions, and your data.</p>
+          </div>
+          <div class="card-body" style="padding-bottom:24px">
+            <p class="subhead" style="margin-top:4px">Connected accounts</p>
+            <div class="list-row">
+              <span class="list-ic">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.6-.1-1.2-.2-1.8H12v3.4h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.1z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 .9-3.4.9-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 13.9a6 6 0 0 1 0-3.8V7.5H3.1a10 10 0 0 0 0 9z"/><path fill="#EA4335" d="M12 6.1c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 0 0 3.1 7.5l3.3 2.6C7.2 7.8 9.4 6.1 12 6.1z"/></svg>
+              </span>
+              <div class="list-meta">
+                <p class="l-title">Google</p>
+                <p class="l-sub">ghislain@gmail.com</p>
+              </div>
+              <span class="tag-ok">Connected</span>
+            </div>
+            <div class="list-row last">
+              <span class="list-ic">
+                <svg viewBox="0 0 24 24" fill="#1c1c1c" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+              </span>
+              <div class="list-meta">
+                <p class="l-title">GitHub</p>
+                <p class="l-sub">Not connected</p>
+              </div>
+              <button class="btn btn-ghost btn-sm">Connect</button>
+            </div>
+
+            <p class="subhead">Active sessions</p>
+            <div class="list-row last">
+              <span class="list-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+              </span>
+              <div class="list-meta">
+                <p class="l-title">This device — Chrome on Windows</p>
+                <p class="l-sub">Yaoundé, Cameroon · Active now</p>
+              </div>
+              <button class="link-btn">Sign out</button>
+            </div>
+
+            <p class="subhead">Your data</p>
+            <div class="list-row last">
+              <span class="list-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/></svg>
+              </span>
+              <div class="list-meta">
+                <p class="l-title">Export my predictions</p>
+                <p class="l-sub">Download all of your prediction history as a CSV file.</p>
+              </div>
+              <button class="btn btn-ghost btn-sm">Export CSV</button>
+            </div>
+
+            <div class="danger">
+              <div>
+                <p class="d-title">Delete account</p>
+                <p class="d-sub">Permanently remove your account, saved locations, and prediction history. This cannot be undone.</p>
+              </div>
+              <button class="btn btn-danger">Delete account</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

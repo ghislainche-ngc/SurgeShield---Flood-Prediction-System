@@ -67,6 +67,21 @@ export default defineSchema({
     lastActiveAt: v.number(),
   }).index("by_userId", ["userId"]),
 
+  // Per-user app preferences (notifications + units/display). One row per user,
+  // upserted from the Settings page. Stored here rather than Clerk so the data
+  // is queryable server-side and cleaned up with the rest of the user's data.
+  userSettings: defineTable({
+    userId: v.string(), // Clerk identity.subject
+    notifyHighRisk: v.boolean(),
+    notifyWeekly: v.boolean(),
+    notifyProduct: v.boolean(),
+    units: v.union(v.literal("metric"), v.literal("imperial")),
+    tempUnit: v.union(v.literal("C"), v.literal("F")),
+    mapStyle: v.union(v.literal("dark"), v.literal("light")),
+    landingPage: v.string(), // e.g. "/dashboard"
+    updatedAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
   savedLocations: defineTable({
     userId: v.string(),
     name: v.string(),

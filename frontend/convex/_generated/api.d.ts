@@ -14,6 +14,7 @@ import type * as contact from "../contact.js";
 import type * as helpers from "../helpers.js";
 import type * as locations from "../locations.js";
 import type * as predictions from "../predictions.js";
+import type * as settings from "../settings.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   helpers: typeof helpers;
   locations: typeof locations;
   predictions: typeof predictions;
+  settings: typeof settings;
 }>;
 
 /**
