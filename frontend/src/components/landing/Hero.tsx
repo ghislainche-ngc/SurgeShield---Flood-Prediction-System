@@ -1,13 +1,6 @@
 import Link from "next/link";
 import styles from "./landing.module.css";
-
-/*
- * Model-performance numbers must never be hard-coded — they render from the
- * ML API's real metrics.json (PROJECT_STRUCTURE.md rule #2). Until the API is
- * wired, show a neutral placeholder. The design's "93.2%" lived here.
- * TODO: fetch from /model-info and replace ACCURACY.
- */
-const ACCURACY = "—";
+import LandingAccuracy from "./LandingAccuracy";
 
 export default function Hero() {
   return (
@@ -120,12 +113,15 @@ export default function Hero() {
           </span>
           <span className={styles.dot} aria-hidden="true" />
           <span>
-            {/* placeholder — real accuracy comes from metrics.json */}
-            <strong>{ACCURACY}</strong> Prediction Accuracy
+            {/* real accuracy from metrics.json; "—" when the ML API is unreachable */}
+            <strong>
+              <LandingAccuracy mode="percent" />
+            </strong>{" "}
+            Prediction Accuracy
           </span>
           <span className={styles.dot} aria-hidden="true" />
           <span>
-            <strong>5</strong> ML Models Compared
+            <strong>3</strong> ML Models Compared
           </span>
         </div>
       </div>

@@ -257,7 +257,7 @@ export default function AboutPage() {
               <p className={styles["pipe-step"]}>STEP 01</p>
               <h3>Data Collection</h3>
               <p>
-                10,000 real-world flood observations, each with 12 environmental
+                10,000 real-world flood observations, each with 11 environmental
                 features — rainfall, river discharge, elevation, soil type and
                 more.
               </p>
@@ -280,8 +280,8 @@ export default function AboutPage() {
               <p className={styles["pipe-step"]}>STEP 02</p>
               <h3>Model Training</h3>
               <p>
-                Five ML algorithms compared head-to-head: Logistic Regression,
-                Random Forest, XGBoost, Gradient Boosting and SVM.
+                Three ML algorithms compared head-to-head: Logistic Regression,
+                Random Forest and XGBoost.
               </p>
             </div>
             <Arrow />

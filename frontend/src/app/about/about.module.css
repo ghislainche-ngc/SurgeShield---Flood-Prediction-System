@@ -448,6 +448,13 @@
   .nav-links {
     display: none;
   }
+  /* With the links hidden, the 3-col grid strands the Sign In button in the
+     middle — switch to a simple logo ↔ button flex row. */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
 }
 @media (max-width: 560px) {
   .container {

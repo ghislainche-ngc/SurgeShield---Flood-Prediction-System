@@ -69,7 +69,7 @@ export default function FeaturesGrid() {
             </span>
             <h3>Analytics Dashboard</h3>
             <p>
-              Compare 5 ML models, view confusion matrices, ROC curves, and
+              Compare 3 ML models, view confusion matrices, ROC curves, and
               feature importance — all in one place.
             </p>
           </div>
