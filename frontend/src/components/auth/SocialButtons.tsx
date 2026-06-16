@@ -23,6 +23,7 @@ export default function SocialButtons({
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const [pending, setPending] = useState<Provider | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Where to land once the OAuth session is created. Must be a real app page —
   // pointing this at /sso-callback (the handler) leaves Clerk with no onward
@@ -34,6 +35,7 @@ export default function SocialButtons({
     "/dashboard";
 
   async function authenticate(strategy: Provider) {
+    setError(null);
     setPending(strategy);
     const opts = {
       strategy,
@@ -42,20 +44,43 @@ export default function SocialButtons({
       // Intermediate handler for OAuth return / sign-ups needing more info.
       redirectCallbackUrl: "/sso-callback",
     };
+    const client = mode === "sign-in" ? signIn : signUp;
+    if (!client) {
+      setError("Sign-in isn't ready yet — give it a second and try again.");
+      setPending(null);
+      return;
+    }
     try {
-      const res =
-        mode === "sign-in"
-          ? await signIn?.sso(opts)
-          : await signUp?.sso(opts);
-      // On success the browser navigates away; only re-enable on failure.
-      if (res?.error) setPending(null);
-    } catch {
+      // On success the browser navigates away to the provider; we only get here
+      // again on failure. Surface the reason instead of failing silently — e.g.
+      // the provider isn't enabled in Clerk, or a session already exists.
+      const res = await client.sso(opts);
+      if (res?.error) {
+        setError(
+          res.error.longMessage ??
+            res.error.message ??
+            "Couldn't start that sign-in. Make sure the provider is enabled in Clerk.",
+        );
+        setPending(null);
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Couldn't start that sign-in. Please try again.",
+      );
       setPending(null);
     }
   }
 
   return (
-    <div className={styles["social-row"]}>
+    <>
+      {error && (
+        <p className={styles["form-error"]} role="alert">
+          {error}
+        </p>
+      )}
+      <div className={styles["social-row"]}>
       <button
         type="button"
         className={styles["btn-social"]}
@@ -93,6 +118,7 @@ export default function SocialButtons({
         </svg>
         GitHub
       </button>
-    </div>
+      </div>
+    </>
   );
 }
