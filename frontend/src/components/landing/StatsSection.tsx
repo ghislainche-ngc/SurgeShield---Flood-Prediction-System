@@ -1,11 +1,11 @@
 import styles from "./landing.module.css";
-import LandingAccuracy from "./LandingAccuracy";
+import ModelAccuracy from "./ModelAccuracy";
 
 /*
  * The first two cards are cited global flood facts (WHO / World Bank) and are
  * shown as-is. The third card is SurgeShield's own model accuracy — a
  * model-performance stat — rendered live from the real metrics.json via the ML
- * API (LandingAccuracy), never hard-coded. The design's value here was "93.2%".
+ * API (ModelAccuracy), never hard-coded. The design's value here was "93.2%".
  */
 export default function StatsSection() {
   return (
@@ -32,7 +32,7 @@ export default function StatsSection() {
           </div>
           <div className={styles["stat-card"]}>
             <div className={styles["stat-number"]}>
-              <LandingAccuracy mode="number" />
+              <ModelAccuracy mode="number" />
               <span>%</span>
             </div>
             <p className={styles["stat-label"]}>

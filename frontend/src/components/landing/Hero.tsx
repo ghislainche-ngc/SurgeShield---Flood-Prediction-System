@@ -1,6 +1,6 @@
 import Link from "next/link";
 import styles from "./landing.module.css";
-import LandingAccuracy from "./LandingAccuracy";
+import ModelAccuracy from "./ModelAccuracy";
 
 export default function Hero() {
   return (
@@ -115,7 +115,7 @@ export default function Hero() {
           <span>
             {/* real accuracy from metrics.json; "—" when the ML API is unreachable */}
             <strong>
-              <LandingAccuracy mode="percent" />
+              <ModelAccuracy mode="percent" />
             </strong>{" "}
             Prediction Accuracy
           </span>

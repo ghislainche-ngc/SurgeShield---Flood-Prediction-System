@@ -5,16 +5,16 @@ import { useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
 /*
- * Real model accuracy for the public landing page, fetched from the ML API
- * (Convex action getAnalytics → Flask /analytics → metrics.json). Never a
- * hard-coded figure (PROJECT_STRUCTURE.md rule #2): shows the honest "—"
- * placeholder until/unless the API resolves. getAnalytics needs no auth, so it
- * works for anonymous visitors.
+ * Real model accuracy for the public marketing pages (landing `/`, about
+ * `/about`), fetched from the ML API (Convex action getAnalytics → Flask
+ * /analytics → metrics.json). Never a hard-coded figure (PROJECT_STRUCTURE.md
+ * rule #2): shows the honest "—" placeholder until/unless the API resolves.
+ * getAnalytics needs no auth, so it works for anonymous visitors.
  *
  * mode="percent" → "50.3%" (inline proof stat); mode="number" → "50.3" (paired
- * with a sibling "%" span in the stats card).
+ * with a sibling "%" in the markup).
  */
-export default function LandingAccuracy({
+export default function ModelAccuracy({
   mode = "percent",
 }: {
   mode?: "percent" | "number";

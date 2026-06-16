@@ -1,15 +1,14 @@
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
+import ModelAccuracy from "@/components/landing/ModelAccuracy";
 import styles from "./about.module.css";
 
 /*
  * Model-performance numbers are never hard-coded — they render from the ML
- * API's real metrics.json (PROJECT_STRUCTURE.md rule #2). The design showed
- * "XGBoost at 93.2% accuracy"; the number is a placeholder until the API is
- * wired. TODO: replace ACCURACY with the value from /model-info.
+ * API's real metrics.json (PROJECT_STRUCTURE.md rule #2) via <ModelAccuracy>,
+ * falling back to "—" when the API is unreachable. The real best model is
+ * Logistic Regression (~50.2%); the design's "XGBoost at 93.2%" was wrong.
  */
-const ACCURACY = "—";
-
 export const metadata = {
   title: "How It Works — SurgeShield",
   description:
@@ -58,7 +57,7 @@ const techStack = [
   },
   {
     name: "XGBoost",
-    desc: "Best classifier",
+    desc: "Gradient boosting",
     icon: <path d="M3 21h18M7 21V9M12 21V4M17 21v-8" />,
   },
   {
@@ -302,9 +301,10 @@ export default function AboutPage() {
               <p className={styles["pipe-step"]}>STEP 03</p>
               <h3>Deployment</h3>
               <p>
-                {/* placeholder — real accuracy comes from metrics.json */}
-                The best model — XGBoost at {ACCURACY}% accuracy — is served
-                through a production REST API on a live VPS, behind HTTPS.
+                {/* real accuracy from metrics.json; "—" when the ML API is unreachable */}
+                The best model — Logistic Regression at{" "}
+                <ModelAccuracy mode="number" />% accuracy — is served through a
+                production REST API on a live VPS, behind HTTPS.
               </p>
             </div>
           </div>
