@@ -44,8 +44,11 @@
 .nav > .logo {
   justify-self: start;
 }
-.nav > .btn {
+.nav > .nav-cta {
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .logo {
   display: flex;

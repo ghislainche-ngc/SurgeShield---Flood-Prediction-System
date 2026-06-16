@@ -48,12 +48,20 @@ export default function Hero() {
               <a href="#contact">Contact</a>
             </li>
           </ul>
-          <Link
-            href="/sign-up"
-            className={`${styles.btn} ${styles["btn-primary"]}`}
-          >
-            Get Started
-          </Link>
+          <div className={styles["nav-cta"]}>
+            <Link
+              href="/sign-in"
+              className={`${styles.btn} ${styles["btn-ghost-light"]}`}
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/sign-up"
+              className={`${styles.btn} ${styles["btn-primary"]}`}
+            >
+              Get Started
+            </Link>
+          </div>
         </nav>
       </div>
 
