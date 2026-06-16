@@ -550,14 +550,28 @@
   .nav-links {
     display: none;
   }
+  /* With the links hidden, the 3-col grid leaves the CTA mis-placed and able to
+     overflow on narrow screens — switch to a simple logo ↔ CTA flex row. */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
 }
 @media (max-width: 600px) {
+  /* tighter page gutters give the hero copy + nav room to breathe on phones */
+  .container {
+    padding: 0 18px;
+  }
   .values-grid {
     grid-template-columns: 1fr;
   }
   .hero-ctas {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+  .hero-ctas .btn {
+    justify-content: center;
   }
   .cta-buttons {
     flex-direction: column;
@@ -565,13 +579,45 @@
   }
   /* keep the logo + both nav buttons on one line on phones */
   .logo {
-    font-size: 18px;
-  }
-  .nav > .nav-cta {
+    font-size: 17px;
     gap: 8px;
   }
+  .logo-mark {
+    width: 34px;
+    height: 34px;
+  }
+  .nav > .nav-cta {
+    gap: 7px;
+    flex-shrink: 0;
+  }
   .nav .btn {
-    padding: 9px 15px;
+    padding: 9px 13px;
     font-size: 13px;
+  }
+}
+
+/* Smallest phones (≤360–375px): compact the brand + nav buttons further so the
+   logo and both auth CTAs still fit on one line without clipping. */
+@media (max-width: 380px) {
+  .container {
+    padding: 0 14px;
+  }
+  .logo {
+    font-size: 15px;
+    gap: 7px;
+  }
+  .logo-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .nav {
+    gap: 10px;
+  }
+  .nav > .nav-cta {
+    gap: 6px;
+  }
+  .nav .btn {
+    padding: 8px 11px;
+    font-size: 12.5px;
   }
 }
