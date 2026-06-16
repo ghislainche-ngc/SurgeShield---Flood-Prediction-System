@@ -196,11 +196,93 @@ keys in `.env.local` + the Convex `auth.config.ts` issuer.
 
 ## Redeploys
 
-After pushing to GitHub:
+**Manual** — SSH in and run:
 
 ```bash
 bash /opt/surgeshield/deployment/deploy.sh
 ```
+
+This pulls `main`, reinstalls deps, rebuilds the frontend, and restarts both
+services.
+
+## Continuous deployment (GitHub Actions → VPS)
+
+`.github/workflows/deploy.yml` runs `deploy.sh` over SSH **after** the CI
+workflow (`ci.yml`) succeeds on `main` — it's triggered by `workflow_run`, so a
+cancelled/superseded CI run never interrupts a deploy. So once this is set up,
+the loop is just: `git push` → CI passes → VPS redeploys.
+
+CI logs in as the **`surgeshield`** service account (it owns `/opt/surgeshield`,
+so `git pull`/`npm` run natively and `deploy.sh` works verbatim). Two one-time
+setups are needed — one on the VPS, one in GitHub.
+
+### A. On the VPS (once)
+
+1. **Generate a dedicated deploy keypair** (do this on your laptop, *not* the
+   VPS — the private half goes into GitHub, the public half onto the VPS):
+
+   ```bash
+   ssh-keygen -t ed25519 -f surgeshield_deploy -N "" -C "github-actions-deploy"
+   # creates surgeshield_deploy (private) + surgeshield_deploy.pub (public)
+   ```
+
+2. **Authorize the public key for `surgeshield`** (run as your `deploy` admin
+   user, via sudo):
+
+   ```bash
+   sudo install -d -m 700 -o surgeshield -g surgeshield /home/surgeshield/.ssh
+   # paste the contents of surgeshield_deploy.pub as a new line:
+   echo 'ssh-ed25519 AAAA... github-actions-deploy' \
+     | sudo tee -a /home/surgeshield/.ssh/authorized_keys
+   sudo chown surgeshield:surgeshield /home/surgeshield/.ssh/authorized_keys
+   sudo chmod 600 /home/surgeshield/.ssh/authorized_keys
+   ```
+
+3. **Let `surgeshield` restart only its two services without a password** — a
+   scoped `NOPASSWD` rule (it stays unprivileged for everything else):
+
+   ```bash
+   echo 'surgeshield ALL=(root) NOPASSWD: /usr/bin/systemctl restart surgeshield-api surgeshield-web' \
+     | sudo tee /etc/sudoers.d/surgeshield-deploy
+   sudo chmod 440 /etc/sudoers.d/surgeshield-deploy
+   sudo visudo -c     # syntax check — must say "parsed OK"
+   ```
+
+   > The rule must match the exact command in `deploy.sh`
+   > (`systemctl restart surgeshield-api surgeshield-web`, both units in one
+   > call). Verify `systemctl`'s path with `command -v systemctl` and adjust if
+   > it's not `/usr/bin/systemctl`.
+
+   Then confirm the key + sudo work non-interactively, from your laptop:
+
+   ```bash
+   ssh -i surgeshield_deploy surgeshield@<IP> \
+     'sudo systemctl restart surgeshield-api surgeshield-web && echo OK'
+   ```
+
+### B. In GitHub (once)
+
+Add repository secrets (**Settings → Secrets and variables → Actions**, or scope
+them to a `production` Environment — the workflow declares `environment: production`):
+
+| Secret | Value |
+| --- | --- |
+| `VPS_HOST` | the VPS IPv4 (e.g. `185.245.183.96`) |
+| `VPS_USER` | `surgeshield` |
+| `VPS_SSH_KEY` | the **full private key** — paste the entire `surgeshield_deploy` file, including the `-----BEGIN/END-----` lines |
+| `VPS_PORT` | *(optional)* SSH port if not `22` |
+
+Push any commit to `main` and watch the **Deploy to VPS** job in the Actions tab.
+If a deploy fails, the services keep running the previous build (the restart is
+the last step), so a bad deploy won't take the site down — `deploy.sh` uses
+`set -euo pipefail` and stops before restarting if the build fails.
+
+> **Security notes.** The key only grants the `surgeshield` login + the two
+> scoped restarts. Step 0's SSH hardening (key-only auth) still applies. The
+> workflow pins the host key via `ssh-keyscan` on first run (TOFU); for a
+> stronger guarantee, capture `ssh-keyscan <IP>` output once and store it as a
+> `VPS_KNOWN_HOSTS` secret. Rotate the deploy key by regenerating it and
+> updating `authorized_keys` + the `VPS_SSH_KEY` secret.
 
 ## Notes / security
 

@@ -1,7 +1,8 @@
 name: CI
 
-# Quality gates for the SurgeShield monorepo. No deploys — this only
-# lints + typechecks the Next.js frontend and sanity-checks the ml-api.
+# Quality gates for the SurgeShield monorepo: lint + typecheck the Next.js
+# frontend and sanity-check the ml-api. Deploys live in deploy.yml, which runs
+# automatically after this workflow succeeds on main.
 on:
   push:
     branches: [main]
