@@ -225,6 +225,7 @@ export default function AdminView() {
                 : "No users yet — they appear here after their first prediction."}
             </p>
           ) : (
+            <div className={styles["table-scroll"]}>
             <table className={styles.utable}>
               <thead>
                 <tr>
@@ -275,6 +276,7 @@ export default function AdminView() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </section>
 

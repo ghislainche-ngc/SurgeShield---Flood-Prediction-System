@@ -157,6 +157,14 @@
 }
 
 /* ===== user table ===== */
+.table-scroll {
+  /* keep the 5-column table from overflowing the page on narrow screens */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.utable {
+  min-width: 520px;
+}
 .card-head-flex {
   display: flex;
   align-items: center;

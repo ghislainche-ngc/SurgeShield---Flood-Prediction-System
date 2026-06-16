@@ -142,10 +142,17 @@
 }
 
 /* comparison table */
+.table-scroll {
+  /* let the multi-column table scroll horizontally on narrow screens instead of
+     forcing the whole page to overflow */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 20px;
+}
 .cmp-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
-  margin-top: 20px;
   font-size: 13px;
 }
 .cmp-table th,

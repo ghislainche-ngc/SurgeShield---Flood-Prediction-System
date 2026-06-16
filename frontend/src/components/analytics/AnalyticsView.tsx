@@ -145,26 +145,28 @@ export default function AnalyticsView() {
           ))}
         </div>
 
-        <table className={styles["cmp-table"]}>
-          <thead>
-            <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>ROC-AUC</th></tr>
-          </thead>
-          <tbody>
-            {models.map(([name, mm]) => (
-              <tr key={name} className={name === best ? styles["best-row"] : undefined}>
-                <td>
-                  {name}
-                  {name === best && <span className={styles["tag-best"]}>BEST</span>}
-                </td>
-                <td>{f3(mm.test.accuracy)}</td>
-                <td>{f3(mm.test.precision)}</td>
-                <td>{f3(mm.test.recall)}</td>
-                <td>{f3(mm.test.f1)}</td>
-                <td>{f3(mm.test.roc_auc)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className={styles["table-scroll"]}>
+          <table className={styles["cmp-table"]}>
+            <thead>
+              <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>ROC-AUC</th></tr>
+            </thead>
+            <tbody>
+              {models.map(([name, mm]) => (
+                <tr key={name} className={name === best ? styles["best-row"] : undefined}>
+                  <td>
+                    {name}
+                    {name === best && <span className={styles["tag-best"]}>BEST</span>}
+                  </td>
+                  <td>{f3(mm.test.accuracy)}</td>
+                  <td>{f3(mm.test.precision)}</td>
+                  <td>{f3(mm.test.recall)}</td>
+                  <td>{f3(mm.test.f1)}</td>
+                  <td>{f3(mm.test.roc_auc)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {/* confusion + ROC */}

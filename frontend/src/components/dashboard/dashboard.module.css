@@ -371,3 +371,20 @@
     border-top: 1px solid var(--line);
   }
 }
+
+@media (max-width: 600px) {
+  /* The 4-column prediction row (270px of fixed tracks) can't fit a phone, so
+     let it wrap: location on its own line, then date · risk · probability. */
+  .pred-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+  }
+  .pred-loc {
+    flex: 1 1 100%;
+  }
+  .pred-prob {
+    margin-left: auto;
+  }
+}
