@@ -1,19 +1,43 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useEffect, useState } from "react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import styles from "./dashboard.module.css";
 
 /*
- * Overview stat cards, live from Convex. Prediction Accuracy stays "—" (never a
- * hard-coded figure — it comes from the ML API's metrics.json once wired,
- * PROJECT_STRUCTURE.md rule #2). "…" shows while a query is loading.
+ * Overview stat cards. Total Predictions / Locations / High Risk are live from
+ * Convex. Prediction Accuracy is the REAL model accuracy from the ML API
+ * (Flask /analytics → metrics.json) and falls back to "—" when the API is
+ * unreachable — never a hard-coded figure (PROJECT_STRUCTURE.md rule #2).
+ * "…" shows while a Convex query is loading.
  */
-const ACCURACY = "—";
+const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 export default function StatCards() {
   const stats = useQuery(api.predictions.getPredictionStats);
   const locations = useQuery(api.locations.getUserLocations);
+  const getAnalytics = useAction(api.actions.getAnalytics);
+
+  // Real accuracy + best model from the ML API; "—" until/unless it resolves.
+  const [accuracy, setAccuracy] = useState<string>("—");
+  const [bestModel, setBestModel] = useState<string>("ML model");
+
+  useEffect(() => {
+    let ignore = false;
+    getAnalytics({})
+      .then((d) => {
+        if (ignore) return;
+        setAccuracy(pct(d.metrics.metrics.accuracy));
+        if (d.metrics.best_model) setBestModel(d.metrics.best_model);
+      })
+      .catch(() => {
+        // ML API unreachable — keep the honest "—" placeholder.
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [getAnalytics]);
 
   const num = (v: number | undefined) => (v === undefined ? "…" : String(v));
   const thisWeek = stats?.thisWeek ?? 0;
@@ -81,9 +105,9 @@ export default function StatCards() {
             </svg>
           </span>
         </div>
-        {/* placeholder — real accuracy comes from metrics.json */}
-        <p className={styles["stat-num"]}>{ACCURACY}</p>
-        <p className={`${styles["stat-delta"]} ${styles.neutral}`}>Logistic Regression</p>
+        {/* real accuracy from metrics.json; "—" when the ML API is unreachable */}
+        <p className={styles["stat-num"]}>{accuracy}</p>
+        <p className={`${styles["stat-delta"]} ${styles.neutral}`}>{bestModel}</p>
       </div>
     </section>
   );
