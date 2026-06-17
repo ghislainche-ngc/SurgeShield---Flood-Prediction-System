@@ -194,6 +194,117 @@ keys in `.env.local` + the Convex `auth.config.ts` issuer.
 - Sign in → **Predict** → Analyze: a real prediction saves and the dashboard,
   history, map, admin, and `/analytics` all populate from the VPS API.
 
+## 13. Switch to a real domain (`surgeshield.online`)
+
+Once you own a domain you no longer need sslip.io. The plan: the apex serves the
+frontend, `www` redirects to it, and `api.` serves the Flask API.
+
+| Host | Serves |
+| --- | --- |
+| `surgeshield.online` | Next.js frontend (canonical) |
+| `www.surgeshield.online` | 301 → apex |
+| `api.surgeshield.online` | Flask ML API |
+
+### A. DNS (at your domain registrar)
+
+Add three records pointing at the VPS IPv4 (`<IP>`). TTL 300–3600 is fine:
+
+```
+Type  Name   Value
+A     @      <IP>
+A     www    <IP>
+A     api    <IP>
+```
+
+Wait for them to resolve before running certbot:
+
+```bash
+dig +short surgeshield.online api.surgeshield.online www.surgeshield.online
+# each must print <IP>
+```
+
+### B. Nginx: add the new hostnames
+
+Edit `/etc/nginx/sites-available/surgeshield.conf`. In the **frontend** server
+block set:
+
+```nginx
+server_name surgeshield.online www.surgeshield.online;
+```
+
+and in the **API** block set:
+
+```nginx
+server_name api.surgeshield.online;
+```
+
+(You can keep the old sslip.io names alongside them if you want both to work —
+`server_name surgeshield.online www.surgeshield.online <IP>.sslip.io;`.) Then:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### C. HTTPS for the domain
+
+```bash
+sudo certbot --nginx \
+  -d surgeshield.online -d www.surgeshield.online -d api.surgeshield.online \
+  --non-interactive --agree-tos -m ghislainche20@gmail.com --redirect
+```
+
+certbot adds 443 + the HTTP→HTTPS redirect and auto-renews. To make `www` 301 to
+the apex, certbot usually offers it; if not, add a tiny redirect server block for
+`www.surgeshield.online` returning `301 https://surgeshield.online$request_uri`.
+
+### D. Point Convex + frontend at the new hosts
+
+```bash
+# from frontend/ (local or VPS) — Convex actions now call the domain API:
+npx convex env set ML_API_URL "https://api.surgeshield.online"
+```
+
+In `/opt/surgeshield/frontend/.env.local` add (so canonical/OG URLs are correct —
+the code already defaults to the domain, this just makes it explicit/overridable):
+
+```ini
+NEXT_PUBLIC_SITE_URL=https://surgeshield.online
+```
+
+Then rebuild + restart: `bash /opt/surgeshield/deployment/deploy.sh`.
+
+### E. Clerk: allow the new origin
+
+In the Clerk Dashboard add `https://surgeshield.online` (and
+`https://www.surgeshield.online`) to the instance's allowed origins. For a polished
+production setup, create a **production** instance and swap in `pk_live`/`sk_live`
+(see Step 11).
+
+### F. Get it on Google (search visibility + snippet)
+
+The app already emits `/robots.txt`, `/sitemap.xml`, a canonical URL, and the
+title + description Google shows as the result snippet. To get indexed:
+
+1. Open [Google Search Console](https://search.google.com/search-console) → **Add
+   property**.
+2. **Domain** property (recommended, covers all subdomains): enter
+   `surgeshield.online`, then add the **TXT** record Google gives you at your
+   registrar (`Type TXT, Name @, Value google-site-verification=…`). *No code.*
+   - *Or* **URL-prefix** property `https://surgeshield.online` → "HTML tag"
+     method: copy the token into `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` in
+     `.env.local` and rebuild.
+3. After verifying → **Sitemaps** → submit `https://surgeshield.online/sitemap.xml`.
+4. **URL Inspection** → enter the homepage → **Request indexing** to jump the queue.
+
+Indexing takes hours-to-days; the title/description snippet comes from the page
+metadata in `frontend/src/app/layout.tsx`. Verify the machine-readable bits with:
+
+```bash
+curl -s https://surgeshield.online/robots.txt
+curl -s https://surgeshield.online/sitemap.xml
+curl -s https://surgeshield.online/ | grep -i '<meta name="description"'
+```
+
 ## Redeploys
 
 **Manual** — SSH in and run:

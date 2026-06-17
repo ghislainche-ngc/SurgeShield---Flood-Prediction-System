@@ -12,6 +12,8 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sso-callback(.*)", // OAuth return — must finalize before auth gating
+  "/robots.txt", // SEO — must be crawlable, never redirected to sign-in
+  "/sitemap.xml", // SEO — must be crawlable, never redirected to sign-in
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

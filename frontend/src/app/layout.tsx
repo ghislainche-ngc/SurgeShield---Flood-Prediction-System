@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import "./globals.css";
 
 // Brand-matched Clerk theme — applied globally so <SignIn>/<SignUp> and the
@@ -39,10 +40,61 @@ const inter = Inter({
   display: "swap",
 });
 
+// metadataBase makes relative asset paths (e.g. the OG image) resolve to
+// absolute URLs, and powers the canonical/Open Graph URLs Google reads to show
+// the title + description snippet in search results.
+const TITLE = "SurgeShield — AI-Powered Flood Prediction & Analytics";
+
 export const metadata: Metadata = {
-  title: "SurgeShield — AI-Powered Flood Prediction & Analytics",
-  description:
-    "SurgeShield is an AI-powered flood prediction and analytics system: real-time risk scoring, interactive maps, and transparent model metrics.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: "%s · SurgeShield",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "flood prediction",
+    "flood risk",
+    "AI flood forecasting",
+    "flood analytics",
+    "machine learning",
+    "early warning",
+    "SurgeShield",
+  ],
+  authors: [{ name: "SurgeShield" }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/hero.jpg",
+        alt: "SurgeShield — AI-powered flood prediction and analytics",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/hero.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  // Optional: paste the token from Google Search Console's "HTML tag"
+  // verification method into NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION and rebuild.
+  // (DNS-TXT verification needs no code — see deployment/README.md.)
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({
