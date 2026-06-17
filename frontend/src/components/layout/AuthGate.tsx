@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
+import Presence from "./Presence";
 import styles from "./appShell.module.css";
 
 /*
@@ -33,7 +34,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       <Unauthenticated>
         <Loader />
       </Unauthenticated>
-      <Authenticated>{children}</Authenticated>
+      <Authenticated>
+        <Presence />
+        {children}
+      </Authenticated>
     </>
   );
 }

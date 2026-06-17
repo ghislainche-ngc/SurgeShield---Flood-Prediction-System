@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { RiskLevel } from "../dashboard/risk";
+import { listClerkUsers, type ClerkUserRow } from "@/app/(app)/admin/actions";
 import styles from "./admin.module.css";
 
 type MlStatus = {
@@ -60,9 +61,74 @@ function relativeTime(ts: number, now: number): string {
 
 export default function AdminView() {
   const overview = useQuery(api.admin.getSystemOverview);
-  const users = useQuery(api.admin.getUserSummaries);
+  const summaries = useQuery(api.admin.getUserSummaries);
   const feed = useQuery(api.admin.getActivityFeed, { limit: 12 });
   const trends = useQuery(api.admin.getPredictionTrends, { days: 30 });
+
+  // Authoritative roster from Clerk (all registered users, even those who never
+  // predicted). Refetched every 60s to pick up new signups. Falls back to the
+  // Convex directory (`summaries`) if it's empty/unavailable.
+  const [roster, setRoster] = useState<ClerkUserRow[] | null>(null);
+  useEffect(() => {
+    let ignore = false;
+    const load = () => {
+      listClerkUsers()
+        .then((u) => {
+          if (!ignore) setRoster(u);
+        })
+        .catch(() => {
+          if (!ignore) setRoster([]);
+        });
+    };
+    load();
+    const id = setInterval(load, 60000);
+    return () => {
+      ignore = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  // Activity (prediction count + last-active) keyed by Clerk user id, from the
+  // reactive Convex summaries.
+  const activityById = useMemo(() => {
+    const m = new Map<
+      string,
+      { predictionCount: number; lastActive: number; role: string }
+    >();
+    (summaries ?? []).forEach((s) =>
+      m.set(s.userId, {
+        predictionCount: s.predictionCount,
+        lastActive: s.lastActive,
+        role: s.role,
+      }),
+    );
+    return m;
+  }, [summaries]);
+
+  // Merge roster (preferred) with activity. While the roster is loading, use the
+  // Convex directory so the table isn't empty.
+  const users = useMemo(() => {
+    if (roster && roster.length > 0) {
+      return roster.map((c) => {
+        const a = activityById.get(c.id);
+        return {
+          userId: c.id,
+          name: c.name ?? undefined,
+          email: c.email ?? undefined,
+          role: c.role === "admin" ? "admin" : "user",
+          predictionCount: a?.predictionCount ?? 0,
+          // Heartbeat-based presence only (Clerk lastSignInAt ≠ in-app presence),
+          // so "online" reflects an actually-open app.
+          lastActive: a?.lastActive ?? 0,
+        };
+      });
+    }
+    if (roster === null) return undefined; // still loading the roster
+    return summaries; // roster empty (error/non-admin) → Convex directory
+  }, [roster, activityById, summaries]);
+
+  const totalUsers =
+    roster && roster.length > 0 ? roster.length : overview?.totalUsers;
 
   // Live ML-API health (status + latency + best model + accuracy). Convex
   // queries above are already reactive; this action is polled every 30s so the
@@ -127,6 +193,12 @@ export default function AdminView() {
   const floodRatePct =
     overview === undefined ? "…" : `${(overview.floodDetectionRate * 100).toFixed(1)}%`;
 
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const newUsersThisWeek =
+    roster && roster.length > 0 && now
+      ? roster.filter((c) => now - c.createdAt < WEEK_MS).length
+      : (overview?.newUsersThisWeek ?? 0);
+
   // Derived ML-API health values for the cards + System Health panel.
   const mlOnline = ml?.online ?? false;
   const mlAccuracy =
@@ -161,13 +233,13 @@ export default function AdminView() {
               </svg>
             </span>
           </div>
-          <p className={styles["stat-num"]}>{num(overview?.totalUsers)}</p>
-          {overview && overview.newUsersThisWeek > 0 ? (
+          <p className={styles["stat-num"]}>{num(totalUsers)}</p>
+          {newUsersThisWeek > 0 ? (
             <p className={`${styles["stat-foot"]} ${styles.up}`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M7 17L17 7M9 7h8v8" />
               </svg>
-              {overview.newUsersThisWeek} this week
+              {newUsersThisWeek} this week
             </p>
           ) : (
             <p className={styles["stat-foot"]}>Registered accounts</p>
@@ -287,7 +359,7 @@ export default function AdminView() {
             <p className={styles.empty}>
               {users && users.length > 0
                 ? "No users match your search."
-                : "No users yet — they appear here after their first prediction."}
+                : "No registered users yet."}
             </p>
           ) : (
             <div className={styles["table-scroll"]}>
