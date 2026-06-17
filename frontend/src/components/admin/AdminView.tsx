@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { RiskLevel } from "../dashboard/risk";
 import styles from "./admin.module.css";
+
+type MlStatus = {
+  online: boolean;
+  modelLoaded: boolean;
+  latencyMs: number | null;
+  bestModel: string | null;
+  accuracy: number | null;
+};
 
 /*
  * Admin overview, ported from designs/09-admin.html. Everything here is LIVE
@@ -56,6 +64,37 @@ export default function AdminView() {
   const feed = useQuery(api.admin.getActivityFeed, { limit: 12 });
   const trends = useQuery(api.admin.getPredictionTrends, { days: 30 });
 
+  // Live ML-API health (status + latency + best model + accuracy). Convex
+  // queries above are already reactive; this action is polled every 30s so the
+  // health panel stays current too.
+  const getMlStatus = useAction(api.actions.getMlStatus);
+  const [ml, setMl] = useState<MlStatus | null>(null);
+  useEffect(() => {
+    let ignore = false;
+    const poll = () => {
+      getMlStatus({})
+        .then((s) => {
+          if (!ignore) setMl(s);
+        })
+        .catch(() => {
+          if (!ignore)
+            setMl({
+              online: false,
+              modelLoaded: false,
+              latencyMs: null,
+              bestModel: null,
+              accuracy: null,
+            });
+        });
+    };
+    poll();
+    const id = setInterval(poll, 30000);
+    return () => {
+      ignore = true;
+      clearInterval(id);
+    };
+  }, [getMlStatus]);
+
   const [search, setSearch] = useState("");
   // Read wall-clock time off the render path (React purity) and refresh it each
   // minute so "online" status and relative times stay current. Starts at 0 so
@@ -87,6 +126,14 @@ export default function AdminView() {
 
   const floodRatePct =
     overview === undefined ? "…" : `${(overview.floodDetectionRate * 100).toFixed(1)}%`;
+
+  // Derived ML-API health values for the cards + System Health panel.
+  const mlOnline = ml?.online ?? false;
+  const mlAccuracy =
+    ml && ml.accuracy != null ? `${(ml.accuracy * 100).toFixed(1)}%` : "—";
+  const mlLatency = ml && ml.latencyMs != null ? `${ml.latencyMs} ms` : "—";
+  const mlBest = ml?.bestModel ?? "—";
+  const dbConnected = overview !== undefined;
 
   return (
     <>
@@ -188,11 +235,29 @@ export default function AdminView() {
               </svg>
             </span>
           </div>
-          {/* Honest placeholder: the Flask API isn't tunnelled yet. */}
-          <p className={styles["stat-num"]} style={{ fontSize: 22, display: "flex", alignItems: "center", gap: 9 }}>
-            Not wired <span className={styles["offline-dot"]} />
-          </p>
-          <p className={styles["stat-foot"]}>Connect ML_API_URL</p>
+          {/* Live: pings the Flask API /health every 30s. */}
+          {ml === null ? (
+            <>
+              <p className={styles["stat-num"]} style={{ fontSize: 22 }}>…</p>
+              <p className={styles["stat-foot"]}>Checking…</p>
+            </>
+          ) : mlOnline ? (
+            <>
+              <p className={styles["stat-num"]} style={{ fontSize: 22, display: "flex", alignItems: "center", gap: 9 }}>
+                Operational <span className={styles["online-dot"]} />
+              </p>
+              <p className={styles["stat-foot"]}>
+                {ml.latencyMs != null ? `${ml.latencyMs} ms response` : "Model loaded"}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className={styles["stat-num"]} style={{ fontSize: 22, display: "flex", alignItems: "center", gap: 9 }}>
+                Offline <span className={styles["offline-dot"]} />
+              </p>
+              <p className={styles["stat-foot"]}>API unreachable</p>
+            </>
+          )}
         </div>
       </section>
 
@@ -284,31 +349,36 @@ export default function AdminView() {
           <h2>System Health</h2>
           <div className={styles["health-row"]}>
             <span className={styles["health-k"]}>
-              <span className={`${styles.hd} ${styles["hd-off"]}`} />ML API Status
+              <span className={`${styles.hd} ${mlOnline ? "" : styles["hd-off"]}`} />ML API Status
             </span>
-            <span className={`${styles["health-v"]} ${styles.muted}`}>Not connected</span>
+            <span className={`${styles["health-v"]} ${mlOnline ? "" : styles.muted}`}>
+              {ml === null ? "…" : mlOnline ? "Operational" : "Not connected"}
+            </span>
           </div>
           <div className={styles["health-row"]}>
             <span className={styles["health-k"]}>Best Model</span>
-            <span className={styles["health-v"]}>Logistic Regression</span>
+            <span className={`${styles["health-v"]} ${mlBest === "—" ? styles.muted : ""}`}>{mlBest}</span>
           </div>
           <div className={styles["health-row"]}>
             <span className={styles["health-k"]}>Model Accuracy</span>
-            <span className={`${styles["health-v"]} ${styles.muted}`}>—</span>
+            <span className={`${styles["health-v"]} ${mlAccuracy === "—" ? styles.muted : ""}`}>{mlAccuracy}</span>
           </div>
           <div className={styles["health-row"]}>
-            <span className={styles["health-k"]}>Avg API Response</span>
-            <span className={`${styles["health-v"]} ${styles.muted}`}>—</span>
+            <span className={styles["health-k"]}>API Response Time</span>
+            <span className={`${styles["health-v"]} ${mlLatency === "—" ? styles.muted : ""}`}>{mlLatency}</span>
           </div>
           <div className={styles["health-row"]}>
             <span className={styles["health-k"]}>
-              <span className={styles.hd} />Database Status
+              <span className={`${styles.hd} ${dbConnected ? "" : styles["hd-off"]}`} />Database Status
             </span>
-            <span className={styles["health-v"]}>Convex Connected</span>
+            <span className={`${styles["health-v"]} ${dbConnected ? "" : styles.muted}`}>
+              {dbConnected ? "Convex Connected" : "Connecting…"}
+            </span>
           </div>
           <p className={styles.note}>
-            Model accuracy and API latency populate from the ML service&apos;s
-            metrics once the Flask API is reachable (set <code>ML_API_URL</code>).
+            ML API status, latency, best model and accuracy are read live from the
+            Flask service (refreshed every 30s); user, prediction and activity data
+            stream in real time from Convex.
           </p>
         </section>
       </div>

@@ -160,6 +160,73 @@ export const getAnalytics = action({
   },
 });
 
+export type MlStatus = {
+  online: boolean;
+  modelLoaded: boolean;
+  latencyMs: number | null;
+  bestModel: string | null;
+  accuracy: number | null;
+};
+
+/**
+ * Live health of the Flask ML API for the admin dashboard: pings /health
+ * (timing the round-trip server-side for a real latency reading) and, when the
+ * model is loaded, reads best model + accuracy from /model-info. Returns an
+ * all-offline shape instead of throwing so the dashboard degrades gracefully.
+ * No auth: it exposes only service metadata, and the /admin route is gated.
+ */
+export const getMlStatus = action({
+  args: {},
+  handler: async (): Promise<MlStatus> => {
+    const offline: MlStatus = {
+      online: false,
+      modelLoaded: false,
+      latencyMs: null,
+      bestModel: null,
+      accuracy: null,
+    };
+    let base: string;
+    try {
+      base = apiBase();
+    } catch {
+      return offline;
+    }
+    const start = Date.now();
+    try {
+      const res = await fetch(`${base}/health`);
+      const latencyMs = Date.now() - start;
+      if (!res.ok) return { ...offline, latencyMs };
+      const h = (await res.json()) as { status?: string; model_loaded?: boolean };
+      let bestModel: string | null = null;
+      let accuracy: number | null = null;
+      if (h.model_loaded) {
+        try {
+          const mi = await fetch(`${base}/model-info`);
+          if (mi.ok) {
+            const m = (await mi.json()) as {
+              best_model?: string;
+              metrics?: { accuracy?: number };
+            };
+            bestModel = m.best_model ?? null;
+            accuracy = m.metrics?.accuracy ?? null;
+          }
+        } catch {
+          // model-info optional — keep status/latency
+        }
+      }
+      return {
+        online: h.status === "ok",
+        modelLoaded: Boolean(h.model_loaded),
+        latencyMs,
+        bestModel,
+        accuracy,
+      };
+    } catch {
+      return offline;
+    }
+  },
+});
+
 /** Live weather for a location (Flask /weather → Open-Meteo): rainfall/temp/humidity. */
 export const weather = action({
   args: { latitude: v.number(), longitude: v.number() },
