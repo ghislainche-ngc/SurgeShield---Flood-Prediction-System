@@ -8,10 +8,9 @@ import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
  * URLs guarantee an onward destination so Clerk never strands the user on the
  * hosted Account Portal ("signed in, but cannot redirect to your application").
  */
-const SIGN_IN_FALLBACK =
-  process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL ?? "/dashboard";
-const SIGN_UP_FALLBACK =
-  process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL ?? "/dashboard";
+// /continue forwards admins to /admin and everyone else to /dashboard.
+const SIGN_IN_FALLBACK = "/continue";
+const SIGN_UP_FALLBACK = "/continue";
 
 export default function SSOCallbackPage() {
   return (

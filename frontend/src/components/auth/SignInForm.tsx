@@ -7,8 +7,9 @@ import styles from "./auth.module.css";
 import SocialButtons from "./SocialButtons";
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon, ArrowIcon } from "./icons";
 
-const AFTER_SIGN_IN =
-  process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL ?? "/";
+// Route through /continue so admins are forwarded to /admin and everyone else
+// to /dashboard (role-aware redirect, server-side).
+const AFTER_SIGN_IN = "/continue";
 
 // Clerk's signals-API methods resolve to { error }. Prefer the user-facing
 // longMessage; fall back to message, then a generic line.

@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 
 // Next 16 renamed the `middleware` file convention to `proxy` (same runtime
 // mechanism). Clerk detects that it ran via the `AuthStatus` header it sets,
@@ -15,9 +14,6 @@ const isPublicRoute = createRouteMatcher([
   "/sso-callback(.*)", // OAuth return — must finalize before auth gating
 ]);
 
-// Admin panel — additionally requires an "admin" role on the user.
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-
 export default clerkMiddleware(async (auth, req) => {
   // Protect every non-public route. Unauthenticated users are redirected to
   // the sign-in page (NEXT_PUBLIC_CLERK_SIGN_IN_URL).
@@ -25,18 +21,9 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
-  // Gate /admin to admins only. The role is read from the session token —
-  // configure it in Clerk: Dashboard → Sessions → Customize session token:
-  //   { "metadata": "{{user.public_metadata}}" }
-  // and set { "role": "admin" } in the user's public metadata.
-  if (isAdminRoute(req)) {
-    const { sessionClaims } = await auth();
-    const role = (sessionClaims?.metadata as { role?: string } | undefined)
-      ?.role;
-    if (role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-  }
+  // /admin is additionally gated to admins, but that check lives in
+  // app/(app)/admin/layout.tsx (reads user.publicMetadata via currentUser) so
+  // it works from public_metadata alone — no session-token customization needed.
 });
 
 export const config = {
