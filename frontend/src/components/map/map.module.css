@@ -85,6 +85,143 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* geocode search results dropdown */
+.search-wrap {
+  position: relative;
+}
+.geo-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: rgba(18, 31, 25, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.geo-msg {
+  padding: 11px 14px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.geo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+.geo-item:first-child {
+  border-top: none;
+}
+.geo-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.geo-item svg {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  color: #2dd4bf;
+  stroke-width: 1.9;
+  flex-shrink: 0;
+}
+
+/* basemap mode switcher */
+.basemap-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.basemap-pill {
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+.basemap-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.basemap-pill.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* selected place panel (Save / Predict here) */
+.sel-name {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.sel-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.sel-save,
+.sel-predict {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.sel-save {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.sel-save:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+.sel-save:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.sel-predict {
+  background: var(--teal);
+  color: #fff;
+}
+.sel-predict:hover {
+  background: #0f766e;
+}
+.sel-save svg,
+.sel-predict svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+}
+
 .ov-sep {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);

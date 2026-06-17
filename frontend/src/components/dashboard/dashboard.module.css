@@ -210,6 +210,10 @@
   background: rgba(127, 29, 29, 0.14);
   color: var(--risk-crit);
 }
+.b-none {
+  background: rgba(120, 120, 120, 0.12);
+  color: #6b7280;
+}
 .pred-prob {
   font-size: 14px;
   font-weight: 700;

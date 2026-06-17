@@ -3,13 +3,14 @@ import { v } from "convex/values";
 import { riskLevel } from "./schema";
 import { requireUser, requireAdmin } from "./helpers";
 
-/** Save (bookmark) a location for the signed-in user. */
+/** Save (bookmark) a location for the signed-in user. Risk is optional: a place
+ *  can be bookmarked from the map before any prediction has been run. */
 export const saveLocation = mutation({
   args: {
     name: v.string(),
     latitude: v.number(),
     longitude: v.number(),
-    lastRiskLevel: riskLevel,
+    lastRiskLevel: v.optional(riskLevel),
   },
   handler: async (ctx, args) => {
     const userId = await requireUser(ctx);

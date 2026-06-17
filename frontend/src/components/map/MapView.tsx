@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { RiskLevel } from "../dashboard/risk";
+import { geocodePlaces, type GeoResult } from "@/lib/geocode";
 import styles from "./map.module.css";
 
 /*
@@ -17,6 +19,48 @@ import styles from "./map.module.css";
  */
 
 const CARTO_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
+// Keyless basemap modes. CARTO GL styles + an Esri World Imagery raster style
+// for satellite — all free, no API key. setStyle() swaps the basemap; the DOM
+// markers we add are overlays (not style layers), so they persist across swaps.
+type BasemapId = "dark" | "light" | "streets" | "satellite";
+const BASEMAPS: Record<BasemapId, string | maplibregl.StyleSpecification> = {
+  dark: CARTO_STYLE,
+  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  streets: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+  satellite: {
+    version: 8,
+    sources: {
+      "esri-imagery": {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        tileSize: 256,
+        attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
+      },
+    },
+    layers: [{ id: "esri-imagery", type: "raster", source: "esri-imagery" }],
+  } as maplibregl.StyleSpecification,
+};
+const BASEMAP_LABELS: { id: BasemapId; label: string }[] = [
+  { id: "dark", label: "Dark" },
+  { id: "light", label: "Light" },
+  { id: "streets", label: "Streets" },
+  { id: "satellite", label: "Satellite" },
+];
+
+// Build the /predict link for a chosen place (prefills name + coordinates).
+function predictHref(name: string, lat: number, lon: number): string {
+  const p = new URLSearchParams({
+    name,
+    lat: String(lat),
+    lon: String(lon),
+  });
+  return `/predict?${p.toString()}`;
+}
+
+const SAVED_HEX = "#14b8a6"; // neutral teal for a bookmarked place with no risk yet
 
 const RISK_HEX: Record<RiskLevel, string> = {
   Low: "#16a34a",
@@ -55,22 +99,38 @@ function pinEl(): HTMLElement {
   return wrap.firstElementChild as HTMLElement;
 }
 
+// Distinct (indigo) pin for a geocoded search result — visually separate from
+// teal saved-location pins and risk-coloured prediction dots.
+function searchPinEl(): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,#6366f1,#3b82f6);border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.5);display:grid;place-items:center;cursor:pointer;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" style="transform:rotate(45deg)"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg></div>`;
+  return wrap.firstElementChild as HTMLElement;
+}
+
 const ARROW_SVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
 export default function MapView() {
   const predictions = useQuery(api.predictions.getUserPredictions);
   const locations = useQuery(api.locations.getUserLocations);
+  const saveLocation = useMutation(api.locations.saveLocation);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const searchMarkerRef = useRef<maplibregl.Marker | null>(null);
   const fittedRef = useRef(false);
 
   const [ready, setReady] = useState(false);
   const [showPred, setShowPred] = useState(true);
   const [showSaved, setShowSaved] = useState(true);
   const [search, setSearch] = useState("");
+  const [basemap, setBasemap] = useState<BasemapId>("dark");
+  const [geoResults, setGeoResults] = useState<GeoResult[]>([]);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [selectedPlace, setSelectedPlace] = useState<GeoResult | null>(null);
+  const [savingPlace, setSavingPlace] = useState(false);
+  const [savedPlace, setSavedPlace] = useState(false);
 
   // Only predictions that carry coordinates can be mapped.
   const predPoints = useMemo(
@@ -136,8 +196,12 @@ export default function MapView() {
 
     if (showSaved) {
       for (const l of savedList) {
-        const risk = l.lastRiskLevel as RiskLevel;
-        const html = `<div class="ss-pop"><div class="pop-top"><h3>${escapeHtml(l.name)}</h3><span class="pop-badge" style="background:${RISK_BG[risk]};color:${RISK_HEX[risk]}">${risk.toUpperCase()}</span></div><p class="pop-prob">Saved location · last checked ${new Date(l.lastChecked).toLocaleDateString()}</p><a href="/predict" class="pop-btn">New Prediction ${ARROW_SVG}</a></div>`;
+        const risk = l.lastRiskLevel as RiskLevel | undefined;
+        const badge = risk
+          ? `<span class="pop-badge" style="background:${RISK_BG[risk]};color:${RISK_HEX[risk]}">${risk.toUpperCase()}</span>`
+          : `<span class="pop-badge" style="background:rgba(255,255,255,0.12);color:#d6d3ca">UNCHECKED</span>`;
+        const href = predictHref(l.name, l.latitude, l.longitude);
+        const html = `<div class="ss-pop"><div class="pop-top"><h3>${escapeHtml(l.name)}</h3>${badge}</div><p class="pop-prob">Saved location · last checked ${new Date(l.lastChecked).toLocaleDateString()}</p><a href="${href}" class="pop-btn">Predict here ${ARROW_SVG}</a></div>`;
         const marker = new maplibregl.Marker({ element: pinEl(), anchor: "bottom" })
           .setLngLat([l.longitude, l.latitude])
           .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(html))
@@ -156,8 +220,83 @@ export default function MapView() {
     }
   }, [ready, predPoints, savedList, showPred, showSaved]);
 
+  // ---- geocode the search box (keyless Nominatim), debounced ----
+  // All state updates run inside the deferred timeout (never synchronously in
+  // the effect body) so a keystroke doesn't trigger a cascading render.
+  useEffect(() => {
+    const q = search.trim();
+    let ignore = false;
+    const t = setTimeout(async () => {
+      if (q.length < 3) {
+        setGeoResults([]);
+        setGeoStatus("idle");
+        return;
+      }
+      setGeoStatus("loading");
+      try {
+        const results = await geocodePlaces(q);
+        if (ignore) return;
+        setGeoResults(results);
+        setGeoStatus("done");
+      } catch {
+        if (ignore) return;
+        setGeoResults([]);
+        setGeoStatus("error");
+      }
+    }, 400);
+    return () => {
+      ignore = true;
+      clearTimeout(t);
+    };
+  }, [search]);
+
   function flyTo(lng: number, lat: number) {
     mapRef.current?.flyTo({ center: [lng, lat], zoom: 8, duration: 1200 });
+  }
+
+  // Fly to a geocoded place, drop/replace a temporary search marker, and surface
+  // the Save / Predict-here actions for it in the overlay.
+  function selectPlace(r: GeoResult) {
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({ center: [r.lon, r.lat], zoom: 9, duration: 1200 });
+    searchMarkerRef.current?.remove();
+    const short = r.label.split(",")[0];
+    const marker = new maplibregl.Marker({ element: searchPinEl(), anchor: "bottom" })
+      .setLngLat([r.lon, r.lat])
+      .setPopup(
+        new maplibregl.Popup({ offset: 24 }).setHTML(
+          `<div class="ss-pop"><h3>${escapeHtml(short)}</h3><p class="pop-prob">${escapeHtml(r.label)}</p></div>`,
+        ),
+      )
+      .addTo(map);
+    searchMarkerRef.current = marker;
+    setSelectedPlace(r);
+    setSavedPlace(false);
+    setGeoResults([]);
+    setSearch("");
+  }
+
+  // Bookmark the selected place (no prediction yet → no risk level).
+  async function saveSelectedPlace() {
+    if (!selectedPlace || savingPlace || savedPlace) return;
+    setSavingPlace(true);
+    try {
+      await saveLocation({
+        name: selectedPlace.label.split(",")[0],
+        latitude: selectedPlace.lat,
+        longitude: selectedPlace.lon,
+      });
+      setSavedPlace(true);
+    } finally {
+      setSavingPlace(false);
+    }
+  }
+
+  // Switch the basemap. DOM markers persist across setStyle, so no re-plotting.
+  function changeBasemap(id: BasemapId) {
+    setBasemap(id);
+    if (mapRef.current && ready) mapRef.current.setStyle(BASEMAPS[id]);
   }
 
   function goToMyLocations() {
@@ -183,20 +322,85 @@ export default function MapView() {
       <div className={styles.overlay}>
         <div className={styles["overlay-head"]}>
           <h1>Flood Risk Map</h1>
-          <div className={styles.search}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path d="M21 21l-4.5-4.5" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search saved locations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search saved locations"
-            />
+          <div className={styles["search-wrap"]}>
+            <div className={styles.search}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.5-4.5" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search places…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search places"
+              />
+            </div>
+            {search.trim().length >= 3 && (
+              <div className={styles["geo-results"]}>
+                {geoStatus === "error" ? (
+                  <div className={styles["geo-msg"]}>Couldn’t search right now.</div>
+                ) : geoResults.length > 0 ? (
+                  geoResults.map((r, i) => (
+                    <button
+                      key={`${r.lat}-${r.lon}-${i}`}
+                      type="button"
+                      className={styles["geo-item"]}
+                      onClick={() => selectPlace(r)}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
+                        <circle cx="12" cy="10" r="2.5" />
+                      </svg>
+                      <span>{r.label}</span>
+                    </button>
+                  ))
+                ) : geoStatus === "done" ? (
+                  <div className={styles["geo-msg"]}>No places found.</div>
+                ) : (
+                  <div className={styles["geo-msg"]}>Searching…</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
+
+        {selectedPlace && (
+          <>
+            <div className={styles["ov-sep"]} />
+            <div className={styles["ov-section"]}>
+              <p className={styles["ov-title"]}>Selected Place</p>
+              <p className={styles["sel-name"]}>{selectedPlace.label}</p>
+              <div className={styles["sel-actions"]}>
+                <button
+                  type="button"
+                  className={styles["sel-save"]}
+                  onClick={saveSelectedPlace}
+                  disabled={savingPlace || savedPlace}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
+                  {savedPlace ? "Saved ✓" : savingPlace ? "Saving…" : "Save"}
+                </button>
+                <Link
+                  href={predictHref(
+                    selectedPlace.label.split(",")[0],
+                    selectedPlace.lat,
+                    selectedPlace.lon,
+                  )}
+                  className={styles["sel-predict"]}
+                >
+                  Predict here
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className={styles["ov-sep"]} />
         <div className={styles["ov-section"]}>
@@ -227,6 +431,24 @@ export default function MapView() {
 
         <div className={styles["ov-sep"]} />
         <div className={styles["ov-section"]}>
+          <p className={styles["ov-title"]}>Basemap</p>
+          <div className={styles["basemap-row"]}>
+            {BASEMAP_LABELS.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                className={`${styles["basemap-pill"]} ${basemap === b.id ? styles.active : ""}`}
+                onClick={() => changeBasemap(b.id)}
+                aria-pressed={basemap === b.id}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles["ov-sep"]} />
+        <div className={styles["ov-section"]}>
           <p className={styles["ov-title"]}>My Saved Locations</p>
           {locations === undefined ? (
             <p className={styles["ov-empty"]}>Loading…</p>
@@ -236,7 +458,7 @@ export default function MapView() {
             </p>
           ) : (
             filteredSaved.map((l) => {
-              const risk = l.lastRiskLevel as RiskLevel;
+              const risk = l.lastRiskLevel as RiskLevel | undefined;
               return (
                 <button
                   key={l._id}
@@ -244,10 +466,16 @@ export default function MapView() {
                   className={styles["loc-row"]}
                   onClick={() => flyTo(l.longitude, l.latitude)}
                 >
-                  <span className={styles["loc-dot"]} style={{ background: RISK_HEX[risk] }} />
+                  <span
+                    className={styles["loc-dot"]}
+                    style={{ background: risk ? RISK_HEX[risk] : SAVED_HEX }}
+                  />
                   <span className={styles.place}>{l.name}</span>
-                  <span className={styles.lvl} style={{ color: RISK_LIGHT[risk] }}>
-                    {risk}
+                  <span
+                    className={styles.lvl}
+                    style={{ color: risk ? RISK_LIGHT[risk] : "rgba(255,255,255,0.5)" }}
+                  >
+                    {risk ?? "Unchecked"}
                   </span>
                 </button>
               );

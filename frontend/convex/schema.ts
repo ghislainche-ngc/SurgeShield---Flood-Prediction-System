@@ -87,7 +87,9 @@ export default defineSchema({
     name: v.string(),
     latitude: v.number(),
     longitude: v.number(),
-    lastRiskLevel: riskLevel,
+    // Optional: a place can be bookmarked from the map before any prediction
+    // ("Unchecked"); it gets a real risk once a prediction is run + saved.
+    lastRiskLevel: v.optional(riskLevel),
     lastChecked: v.number(),
   }).index("by_user", ["userId"]),
 

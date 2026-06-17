@@ -60,9 +60,13 @@ export default function SavedLocations() {
                   <p className={styles.place}>{loc.name}</p>
                   <p className={styles.coords}>{fmtCoords(loc.latitude, loc.longitude)}</p>
                 </div>
-                <span className={`${styles.badge} ${styles[riskBadgeKey[loc.lastRiskLevel]]}`}>
-                  {loc.lastRiskLevel}
-                </span>
+                {loc.lastRiskLevel ? (
+                  <span className={`${styles.badge} ${styles[riskBadgeKey[loc.lastRiskLevel]]}`}>
+                    {loc.lastRiskLevel}
+                  </span>
+                ) : (
+                  <span className={`${styles.badge} ${styles["b-none"]}`}>Unchecked</span>
+                )}
               </div>
             ))
           )}

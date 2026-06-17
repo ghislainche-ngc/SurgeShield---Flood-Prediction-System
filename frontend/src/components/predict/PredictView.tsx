@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { geocodePlaces, type GeoResult } from "@/lib/geocode";
 import styles from "./predict.module.css";
 
 type RiskLevel = "Low" | "Moderate" | "High" | "Critical";
@@ -118,17 +120,70 @@ export default function PredictView() {
   const runPredict = useAction(api.actions.predict);
   const saveLocation = useMutation(api.locations.saveLocation);
 
+  // A location chosen on the map arrives as ?name=&lat=&lon= — prefill from it.
+  // useSearchParams reads the same value on server + client (no hydration
+  // mismatch, no effect setState); the page wraps this in <Suspense>.
+  const params = useSearchParams();
+  const paramName = params.get("name");
+  const paramLat = params.get("lat");
+  const paramLon = params.get("lon");
+  const paramCoords =
+    paramLat && paramLon && !Number.isNaN(+paramLat) && !Number.isNaN(+paramLon)
+      ? { lat: +paramLat, lon: +paramLon }
+      : null;
+
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
-  const [locationName, setLocationName] = useState("Bangkok, Thailand");
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>({
-    lat: 13.7563,
-    lon: 100.5018,
-  });
+  const [locationName, setLocationName] = useState(
+    paramName ?? "Bangkok, Thailand",
+  );
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+    paramCoords ?? { lat: 13.7563, lon: 100.5018 },
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PredictResult | null>(null);
   const [resultInputs, setResultInputs] = useState<Inputs>(DEFAULTS);
   const [saved, setSaved] = useState(false);
+
+  // Location search (geocode) to choose a place directly on this page.
+  const [locQuery, setLocQuery] = useState("");
+  const [locResults, setLocResults] = useState<GeoResult[]>([]);
+  const [locStatus, setLocStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  useEffect(() => {
+    const q = locQuery.trim();
+    let ignore = false;
+    const t = setTimeout(async () => {
+      if (q.length < 3) {
+        setLocResults([]);
+        setLocStatus("idle");
+        return;
+      }
+      setLocStatus("loading");
+      try {
+        const results = await geocodePlaces(q);
+        if (ignore) return;
+        setLocResults(results);
+        setLocStatus("done");
+      } catch {
+        if (ignore) return;
+        setLocResults([]);
+        setLocStatus("error");
+      }
+    }, 400);
+    return () => {
+      ignore = true;
+      clearTimeout(t);
+    };
+  }, [locQuery]);
+
+  function selectLocation(r: GeoResult) {
+    setLocationName(r.label.split(",")[0]);
+    setCoords({ lat: r.lat, lon: r.lon });
+    setLocQuery("");
+    setLocResults([]);
+    setLocStatus("idle");
+  }
 
   const set = <K extends keyof Inputs>(k: K, v: Inputs[K]) =>
     setInputs((prev) => ({ ...prev, [k]: v }));
@@ -290,6 +345,42 @@ export default function PredictView() {
           <p className={styles["group-label"]}>
             Location <span className={styles["group-note"]}>(optional)</span>
           </p>
+          <div className={styles.field}>
+            <div className={styles["field-head"]}>
+              <span className={styles["field-label"]}>Search a Location</span>
+            </div>
+            <div className={styles["loc-search-wrap"]}>
+              <input
+                type="text"
+                className={styles["text-input"]}
+                value={locQuery}
+                placeholder="Search a place to set its coordinates…"
+                onChange={(e) => setLocQuery(e.target.value)}
+              />
+              {locQuery.trim().length >= 3 && (
+                <div className={styles["loc-results"]}>
+                  {locStatus === "error" ? (
+                    <div className={styles["loc-msg"]}>Couldn’t search right now.</div>
+                  ) : locResults.length > 0 ? (
+                    locResults.map((r, i) => (
+                      <button
+                        key={`${r.lat}-${r.lon}-${i}`}
+                        type="button"
+                        className={styles["loc-item"]}
+                        onClick={() => selectLocation(r)}
+                      >
+                        {r.label}
+                      </button>
+                    ))
+                  ) : locStatus === "done" ? (
+                    <div className={styles["loc-msg"]}>No places found.</div>
+                  ) : (
+                    <div className={styles["loc-msg"]}>Searching…</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
           <div className={styles.field}>
             <div className={styles["field-head"]}>
               <span className={styles["field-label"]}>Location Name</span>
