@@ -5,8 +5,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { geocodePlaces, type GeoResult } from "@/lib/geocode";
+import { geocodePlaces, reverseGeocode, type GeoResult } from "@/lib/geocode";
+import { fetchCurrentWeather } from "@/lib/weather";
 import styles from "./predict.module.css";
+
+const clamp = (v: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, v));
 
 type RiskLevel = "Low" | "Moderate" | "High" | "Critical";
 
@@ -134,16 +138,23 @@ export default function PredictView() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [locationName, setLocationName] = useState(
-    paramName ?? "Bangkok, Thailand",
+    paramName ?? "Douala, Cameroon",
   );
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
-    paramCoords ?? { lat: 13.7563, lon: 100.5018 },
+    paramCoords ?? { lat: 4.0511, lon: 9.7679 },
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PredictResult | null>(null);
   const [resultInputs, setResultInputs] = useState<Inputs>(DEFAULTS);
   const [saved, setSaved] = useState(false);
+
+  // Live-weather wiring: while a location is being resolved + its weather
+  // fetched, and a short note on what got applied. `usedLiveWeather` flips the
+  // saved prediction's provenance to "live" — until the user edits any input.
+  const [locating, setLocating] = useState(false);
+  const [weatherNote, setWeatherNote] = useState<string | null>(null);
+  const [usedLiveWeather, setUsedLiveWeather] = useState(false);
 
   // Location search (geocode) to choose a place directly on this page.
   const [locQuery, setLocQuery] = useState("");
@@ -177,22 +188,72 @@ export default function PredictView() {
     };
   }, [locQuery]);
 
+  // Set coordinates, resolve a place name (reverse-geocode if not given), and
+  // pull live weather to auto-fill the features Open-Meteo can supply (rainfall,
+  // temperature, humidity, elevation). Shared by "Use my current location" and
+  // the search-select so both behave the same.
+  async function applyLocation(lat: number, lon: number, name?: string) {
+    setError(null);
+    setCoords({ lat, lon });
+    setLocating(true);
+    setWeatherNote(null);
+    try {
+      const resolved = name ?? (await reverseGeocode(lat, lon).catch(() => null));
+      if (resolved) setLocationName(resolved);
+
+      const w = await fetchCurrentWeather(lat, lon);
+      setInputs((prev) => ({
+        ...prev,
+        ...(w.rainfall != null && { rainfall: clamp(Math.round(w.rainfall), 0, 500) }),
+        ...(w.temperature != null && { temperature: clamp(Math.round(w.temperature), 0, 50) }),
+        ...(w.humidity != null && { humidity: clamp(Math.round(w.humidity), 20, 100) }),
+        ...(w.elevation != null && { elevation: clamp(Math.round(w.elevation), 0, 9000) }),
+      }));
+      setUsedLiveWeather(true);
+      const bits = [
+        w.temperature != null ? `${Math.round(w.temperature)}°C` : null,
+        w.humidity != null ? `${Math.round(w.humidity)}% RH` : null,
+        w.rainfall != null ? `${Math.round(w.rainfall)} mm rain` : null,
+      ].filter(Boolean);
+      setWeatherNote(
+        bits.length
+          ? `Live weather applied — ${bits.join(" · ")}. Other features keep their current values.`
+          : "Location set. Live weather had no data for this point.",
+      );
+    } catch {
+      setWeatherNote("Couldn't fetch live weather — keeping current values.");
+    } finally {
+      setLocating(false);
+    }
+  }
+
   function selectLocation(r: GeoResult) {
-    setLocationName(r.label.split(",")[0]);
-    setCoords({ lat: r.lat, lon: r.lon });
     setLocQuery("");
     setLocResults([]);
     setLocStatus("idle");
+    void applyLocation(r.lat, r.lon, r.label.split(",")[0]);
   }
 
-  const set = <K extends keyof Inputs>(k: K, v: Inputs[K]) =>
+  // Manual edits override live weather — provenance becomes "manual".
+  const set = <K extends keyof Inputs>(k: K, v: Inputs[K]) => {
+    setUsedLiveWeather(false);
     setInputs((prev) => ({ ...prev, [k]: v }));
+  };
 
   function useMyLocation() {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setError("Geolocation isn't available in this browser.");
+      return;
+    }
+    setLocating(true);
+    setWeatherNote(null);
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => setError("Couldn't get your location."),
+      (pos) => void applyLocation(pos.coords.latitude, pos.coords.longitude),
+      () => {
+        setLocating(false);
+        setError("Couldn't get your location. Check that location access is allowed.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   }
 
@@ -206,7 +267,7 @@ export default function PredictView() {
         latitude: coords?.lat,
         longitude: coords?.lon,
         locationName: locationName.trim() || undefined,
-        weatherSource: "manual",
+        weatherSource: usedLiveWeather ? "live" : "manual",
       });
       setResultInputs(inputs);
       setResult(res as PredictResult);
@@ -385,19 +446,28 @@ export default function PredictView() {
             <div className={styles["field-head"]}>
               <span className={styles["field-label"]}>Location Name</span>
             </div>
-            <input type="text" className={styles["text-input"]} value={locationName} placeholder="e.g. Bangkok, Thailand" onChange={(e) => setLocationName(e.target.value)} />
+            <input type="text" className={styles["text-input"]} value={locationName} placeholder="e.g. Douala, Cameroon" onChange={(e) => setLocationName(e.target.value)} />
           </div>
           <p className={styles.coords}>
             {coords
               ? `Coordinates: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`
               : "No coordinates set (used for the map only)."}
           </p>
-          <button type="button" className={styles["geo-link"]} onClick={useMyLocation}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-            </svg>
-            Use my current location
+          <button type="button" className={styles["geo-link"]} onClick={useMyLocation} disabled={locating}>
+            {locating ? (
+              <><span className={styles.spinner} aria-hidden="true" /> Fetching live conditions…</>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                </svg>
+                Use my current location
+              </>
+            )}
           </button>
+          {weatherNote && (
+            <p className={styles.coords} style={{ color: "var(--teal, #0d9488)" }}>{weatherNote}</p>
+          )}
         </section>
       </div>
 
