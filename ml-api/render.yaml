@@ -1,0 +1,17 @@
+# Render Blueprint for the SurgeShield Flask ML API.
+# Free Python web service running gunicorn. Render injects $PORT.
+# PYTHON_VERSION pins the interpreter so the artifacts' pinned
+# scikit-learn==1.5.2 wheel installs cleanly (matches CI: Python 3.12).
+services:
+  - type: web
+    name: surgeshield-api
+    runtime: python
+    rootDir: ml-api
+    plan: free
+    buildCommand: pip install -r requirements-serve.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
