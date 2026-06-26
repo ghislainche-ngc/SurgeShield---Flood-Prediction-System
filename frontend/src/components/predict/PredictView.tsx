@@ -7,6 +7,7 @@ import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { geocodePlaces, reverseGeocode, type GeoResult } from "@/lib/geocode";
 import { fetchCurrentWeather } from "@/lib/weather";
+import { computeHeuristicRisk } from "@/lib/heuristic";
 import styles from "./predict.module.css";
 
 const clamp = (v: number, min: number, max: number) =>
@@ -295,6 +296,11 @@ export default function PredictView() {
     setSaved(true);
   }
 
+  // Transparent domain heuristic — recomputed live as the inputs change. This is
+  // NOT the ML model (which is honestly ~chance on this no-signal dataset); it is
+  // a visible rule shown alongside it. See src/lib/heuristic.ts.
+  const heuristic = computeHeuristicRisk(inputs);
+
   if (result) {
     return (
       <ResultView
@@ -471,6 +477,31 @@ export default function PredictView() {
         </section>
       </div>
 
+      <section className={styles.card} style={{ marginTop: 4, borderTop: `3px solid ${RISK_COLOR[heuristic.level]}` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <h2 style={{ margin: 0 }}>Physical Risk Heuristic</h2>
+            <p className={styles["card-sub"]} style={{ margin: "2px 0 0" }}>
+              Transparent domain rule · updates live as you adjust inputs · independent of the ML model
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 30, fontWeight: 700, color: RISK_COLOR[heuristic.level], lineHeight: 1 }}>
+              {heuristic.percent}%
+            </span>
+            <span className={styles["risk-pill"]} style={{ background: RISK_COLOR[heuristic.level] }}>
+              {heuristic.level.toUpperCase()} RISK
+            </span>
+          </div>
+        </div>
+        <div className={styles["conf-bar"]} style={{ marginTop: 12 }} aria-hidden="true">
+          <div className={styles["conf-fill"]} style={{ width: `${heuristic.percent}%`, background: RISK_COLOR[heuristic.level] }} />
+        </div>
+        <p className={styles["analyze-note"]} style={{ marginTop: 8 }}>
+          Rule-based estimate from flood physics — separate from the ML model below, which reports honest ~chance-level metrics.
+        </p>
+      </section>
+
       <div className={styles["analyze-bar"]}>
         <button type="button" className={styles["btn-analyze"]} onClick={analyze} disabled={submitting}>
           {submitting ? (
@@ -519,6 +550,11 @@ function ResultView({
   const sumC = result.top_factors.reduce((s, f) => s + Math.abs(f.contribution), 0) || 1;
   const maxC = Math.max(...result.top_factors.map((f) => Math.abs(f.contribution)), 1);
   const place = locationName.trim() || "this location";
+
+  // Transparent domain heuristic for the same inputs — shown beside the ML
+  // result, never conflated with it. See src/lib/heuristic.ts.
+  const heuristic = computeHeuristicRisk(inputs);
+  const hMaxC = heuristic.factors[0]?.contribution || 1;
 
   const summary: { label: string; value: string }[] = [
     { label: "Rainfall", value: `${inputs.rainfall} mm` },
@@ -581,6 +617,33 @@ function ResultView({
               Based on the parameters provided, the model predicts a{" "}
               <strong>{result.risk_level} flood risk</strong> for {place}
               {result.flood ? " — flooding is likely" : " — flooding is unlikely"}.
+            </p>
+          </section>
+
+          <section className={styles.card} style={{ borderTop: `3px solid ${RISK_COLOR[heuristic.level]}` }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <h2 style={{ margin: 0 }}>Physical Risk Heuristic</h2>
+                <p className={styles["card-sub"]} style={{ margin: "2px 0 0" }}>Transparent domain rule · independent of the ML model</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 30, fontWeight: 700, color: RISK_COLOR[heuristic.level], lineHeight: 1 }}>{heuristic.percent}%</span>
+                <span className={styles["risk-pill"]} style={{ background: RISK_COLOR[heuristic.level] }}>{heuristic.level.toUpperCase()} RISK</span>
+              </div>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              {heuristic.factors.slice(0, 5).map((f) => (
+                <div key={f.label} className={styles["bar-row"]}>
+                  <span className={styles["b-name"]}>{f.label}</span>
+                  <div className={styles["bar-track"]}>
+                    <div className={styles["bar-fill"]} style={{ width: `${(f.contribution / hMaxC) * 100}%` }} />
+                  </div>
+                  <span className={styles["b-val"]}>{Math.round(f.weight * 100)}%</span>
+                </div>
+              ))}
+            </div>
+            <p className={styles["factors-note"]}>
+              A weighted rule from flood physics (rainfall, river discharge, elevation, soil…). The percentages above are each factor’s weight in the rule. This is <strong>not</strong> the ML model — it is shown so the system gives an actionable, input-responsive signal while the model’s honest ~chance-level metrics are reported as-is.
             </p>
           </section>
 
